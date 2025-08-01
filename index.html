@@ -977,119 +977,123 @@ window.getBillTotal = getBillTotal;
   
   <section class="js">
   <script id="app-script">
-// --- Lógica para ingresos en billetes ---
-function updateBillIncomeTable() {
-  const billIncomeBody = document.getElementById('billIncomeBody');
-  const billIncomeTotal = document.getElementById('billIncomeTotal');
-  let bills = window.getBillIncomes();
-  billIncomeBody.innerHTML = '';
-  let total = 0;
-  bills.forEach((b, idx) => {
-    const subtotal = b.type * b.quantity;
-    total += subtotal;
-    const tr = document.createElement('tr');
-    // Billete
-    const tdBillete = document.createElement('td');
-    tdBillete.textContent = window.getBillLabel(b.type);
-    tr.appendChild(tdBillete);
-    // Cantidad (editable)
-    const tdCantidad = document.createElement('td');
-    tdCantidad.textContent = b.quantity;
-    tdCantidad.style.cursor = 'pointer';
-    tdCantidad.addEventListener('click', function() {
-      const input = document.createElement('input');
-      input.type = 'number';
-      input.className = 'form-control form-control-sm';
-      input.value = b.quantity;
-      input.min = '1';
-      tdCantidad.innerHTML = '';
-      tdCantidad.appendChild(input);
-      input.focus();
-      input.select();
-      input.addEventListener('blur', function() {
-        const newVal = parseInt(this.value);
-        if (!isNaN(newVal) && newVal > 0) {
-          window.updateBillIncome(b.type, newVal);
-          updateBillIncomeTable();
-        } else {
-          updateBillIncomeTable();
-        }
-      });
-      input.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') this.blur();
-      });
-    });
-    tr.appendChild(tdCantidad);
-    // Total
-    const tdTotal = document.createElement('td');
-    tdTotal.textContent = window.getBillLabel(subtotal);
-    tr.appendChild(tdTotal);
-    // Botón eliminar
-    const tdDelete = document.createElement('td');
-    const deleteBtn = document.createElement('i');
-    deleteBtn.className = 'fas fa-trash delete-icon';
-    deleteBtn.style.cursor = 'pointer';
-    deleteBtn.title = 'Eliminar ingreso';
-    deleteBtn.addEventListener('click', function() {
-      window.deleteBillIncome(b.type);
-      updateBillIncomeTable();
-    });
-    tdDelete.appendChild(deleteBtn);
-    tr.appendChild(tdDelete);
-    billIncomeBody.appendChild(tr);
-  });
-  billIncomeTotal.textContent = window.getBillLabel(total);
-}
+    // --- Variables globales ---
+    let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+    window.expenses = expenses; // Para acceso global
 
-document.addEventListener('DOMContentLoaded', function() {
-  // Inicializar tabla y eventos de ingresos en billetes
-  updateBillIncomeTable();
-  const billIncomeForm = document.getElementById('billIncomeForm');
-  const billType = document.getElementById('billType');
-  const billQuantity = document.getElementById('billQuantity');
-  billIncomeForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const type = parseInt(billType.value);
-    const quantity = parseInt(billQuantity.value);
-    if (!type || isNaN(quantity) || quantity <= 0) return;
-    window.addOrUpdateBillIncome(type, quantity);
-    updateBillIncomeTable();
-    billIncomeForm.reset();
-  });
-  // Botón imprimir billetes
-  document.getElementById('printBillIncomeBtn').addEventListener('click', function() {
-    let html = `<h2 style='text-align:center;'>Ingresos en billetes</h2>`;
-    html += `<table border='1' cellspacing='0' cellpadding='5' style='width:100%;margin:20px 0;text-align:center;'>`;
-    html += `<tr><th>Billete</th><th>Cantidad</th><th>Valor por billete</th><th>Total</th></tr>`;
-    let total = 0;
-    window.getBillIncomes().forEach(b => {
-      const subtotal = b.type * b.quantity;
-      total += subtotal;
-      html += `<tr><td>${window.getBillLabel(b.type)}</td><td>${b.quantity}</td><td>${window.getBillLabel(b.type)}</td><td>${window.getBillLabel(subtotal)}</td></tr>`;
-    });
-    html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>${window.getBillLabel(total)}</th></tr>`;
-    html += `</table>`;
-    const win = window.open('', '', 'width=900,height=700');
-    win.document.write(`<html><head><title>Ingresos en billetes</title></head><body>${html}</body></html>`);
-    win.document.close();
-    win.print();
-  });
-  // Botón guardar tabla de billetes como imagen
-  document.getElementById('saveBillTableImageBtn').addEventListener('click', function() {
-    const table = document.getElementById('billIncomeTable');
-    if (!table) {
-      alert('No se encontró la tabla de billetes.');
-      return;
+    // --- Lógica para ingresos en billetes ---
+    function updateBillIncomeTable() {
+      const billIncomeBody = document.getElementById('billIncomeBody');
+      const billIncomeTotal = document.getElementById('billIncomeTotal');
+      let bills = window.getBillIncomes();
+      billIncomeBody.innerHTML = '';
+      let total = 0;
+      bills.forEach((b, idx) => {
+        const subtotal = b.type * b.quantity;
+        total += subtotal;
+        const tr = document.createElement('tr');
+        // Billete
+        const tdBillete = document.createElement('td');
+        tdBillete.textContent = window.getBillLabel(b.type);
+        tr.appendChild(tdBillete);
+        // Cantidad (editable)
+        const tdCantidad = document.createElement('td');
+        tdCantidad.textContent = b.quantity;
+        tdCantidad.style.cursor = 'pointer';
+        tdCantidad.addEventListener('click', function() {
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.className = 'form-control form-control-sm';
+          input.value = b.quantity;
+          input.min = '1';
+          tdCantidad.innerHTML = '';
+          tdCantidad.appendChild(input);
+          input.focus();
+          input.select();
+          input.addEventListener('blur', function() {
+            const newVal = parseInt(this.value);
+            if (!isNaN(newVal) && newVal > 0) {
+              window.updateBillIncome(b.type, newVal);
+              updateBillIncomeTable();
+            } else {
+              updateBillIncomeTable();
+            }
+          });
+          input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') this.blur();
+          });
+        });
+        tr.appendChild(tdCantidad);
+        // Total
+        const tdTotal = document.createElement('td');
+        tdTotal.textContent = window.getBillLabel(subtotal);
+        tr.appendChild(tdTotal);
+        // Botón eliminar
+        const tdDelete = document.createElement('td');
+        const deleteBtn = document.createElement('i');
+        deleteBtn.className = 'fas fa-trash delete-icon';
+        deleteBtn.style.cursor = 'pointer';
+        deleteBtn.title = 'Eliminar ingreso';
+        deleteBtn.addEventListener('click', function() {
+          window.deleteBillIncome(b.type);
+          updateBillIncomeTable();
+        });
+        tdDelete.appendChild(deleteBtn);
+        tr.appendChild(tdDelete);
+        billIncomeBody.appendChild(tr);
+      });
+      billIncomeTotal.textContent = window.getBillLabel(total);
     }
-    html2canvas(table).then(canvas => {
-      const link = document.createElement('a');
-      link.download = 'tabla_billetes.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Inicializar tabla y eventos de ingresos en billetes
+      updateBillIncomeTable();
+      const billIncomeForm = document.getElementById('billIncomeForm');
+      const billType = document.getElementById('billType');
+      const billQuantity = document.getElementById('billQuantity');
+      billIncomeForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const type = parseInt(billType.value);
+        const quantity = parseInt(billQuantity.value);
+        if (!type || isNaN(quantity) || quantity <= 0) return;
+        window.addOrUpdateBillIncome(type, quantity);
+        updateBillIncomeTable();
+        billIncomeForm.reset();
+      });
+      // Botón imprimir billetes
+      document.getElementById('printBillIncomeBtn').addEventListener('click', function() {
+        let html = `<h2 style='text-align:center;'>Ingresos en billetes</h2>`;
+        html += `<table border='1' cellspacing='0' cellpadding='5' style='width:100%;margin:20px 0;text-align:center;'>`;
+        html += `<tr><th>Billete</th><th>Cantidad</th><th>Valor por billete</th><th>Total</th></tr>`;
+        let total = 0;
+        window.getBillIncomes().forEach(b => {
+          const subtotal = b.type * b.quantity;
+          total += subtotal;
+          html += `<tr><td>${window.getBillLabel(b.type)}</td><td>${b.quantity}</td><td>${window.getBillLabel(b.type)}</td><td>${window.getBillLabel(subtotal)}</td></tr>`;
+        });
+        html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>${window.getBillLabel(total)}</th></tr>`;
+        html += `</table>`;
+        const win = window.open('', '', 'width=900,height=700');
+        win.document.write(`<html><head><title>Ingresos en billetes</title></head><body>${html}</body></html>`);
+        win.document.close();
+        win.print();
+      });
+      // Botón guardar tabla de billetes como imagen
+      document.getElementById('saveBillTableImageBtn').addEventListener('click', function() {
+        const table = document.getElementById('billIncomeTable');
+        if (!table) {
+          alert('No se encontró la tabla de billetes.');
+          return;
+        }
+        html2canvas(table).then(canvas => {
+          const link = document.createElement('a');
+          link.download = 'tabla_billetes.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        });
+      });
     });
-  });
-});
-// --- Fin lógica billetes ---
+    // --- Fin lógica billetes ---
 
     // --- Imprimir todo: gastos, monedas, billetes, dashboard ---
     document.addEventListener('DOMContentLoaded', function() {
@@ -1316,11 +1320,10 @@ document.addEventListener('DOMContentLoaded', function() {
           window.incomeBarChart.update();
         }
       });
-      // Handle expense form submission
+      // --- Agregar gasto ---
       const expenseForm = document.getElementById('expenseForm');
       expenseForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        
         // Get form values
         const date = document.getElementById('expenseDate').value;
         const category = document.getElementById('expenseCategory').value;
@@ -1361,27 +1364,20 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isValid) {
           // Add new expense
           const newExpense = {
-            id: Date.now(), // use timestamp as id
+            id: Date.now(),
             date,
             category,
             description,
             amount
           };
-          
           expenses.push(newExpense);
-          
-          // Save to localStorage
+          window.expenses = expenses;
           localStorage.setItem('expenses', JSON.stringify(expenses));
-          
-          // Update UI
           updateExpensesTable();
           updateCharts();
           updateTotalExpenses();
-          
-          // Reset form
           expenseForm.reset();
           flatpickr("#expenseDate").setDate(new Date());
-          
           // Mostrar mensaje de éxito mejorado (toast)
           const toastEl = document.getElementById('successToast');
           const toast = new bootstrap.Toast(toastEl, { delay: 2500 });
@@ -1523,286 +1519,173 @@ document.addEventListener('DOMContentLoaded', function() {
         updateExpensesTableFiltered(filtered, currentPage);
       }
 
-      function updateExpensesTableFiltered(expenses, page) {
-        const tableBody = document.getElementById('expensesTableBody');
-        const currentRowsElement = document.getElementById('currentRows');
-        const totalRowsElement = document.getElementById('totalRows');
-        tableBody.innerHTML = '';
-        const startIndex = (page - 1) * rowsPerPage;
-        const endIndex = startIndex + rowsPerPage;
-        const paginatedExpenses = expenses.slice(startIndex, endIndex);
-        paginatedExpenses.forEach(expense => {
-          const tr = document.createElement('tr');
-          // Fecha
-          const dateCell = document.createElement('td');
-          dateCell.className = 'editable-cell';
-          dateCell.dataset.id = expense.id;
-          dateCell.dataset.field = 'date';
-          dateCell.textContent = expense.date;
-          dateCell.addEventListener('click', function() {
-            makeExpenseCellEditable(this, expense, 'date');
-          });
-          tr.appendChild(dateCell);
-          // Categoría (en español)
-          const categoryCell = document.createElement('td');
-          categoryCell.className = 'editable-cell';
-          categoryCell.dataset.id = expense.id;
-          categoryCell.dataset.field = 'category';
-          const categoryMap = {
-            'Food': 'Alimentación',
-            'Transportation': 'Transporte',
-            'Housing': 'Vivienda',
-            'Utilities': 'Servicios',
-            'Entertainment': 'Entretenimiento',
-            'Shopping': 'Compras',
-            'Healthcare': 'Salud',
-            'Travel': 'Viajes',
-            'Education': 'Educación',
-            'Other': 'Otro'
-          };
-          categoryCell.textContent = categoryMap[expense.category] || expense.category;
-          categoryCell.addEventListener('click', function() {
-            makeExpenseCellEditable(this, expense, 'category');
-          });
-          tr.appendChild(categoryCell);
-          // Descripción
-          const descriptionCell = document.createElement('td');
-          descriptionCell.className = 'editable-cell';
-          descriptionCell.dataset.id = expense.id;
-          descriptionCell.dataset.field = 'description';
-          descriptionCell.textContent = expense.description;
-          descriptionCell.addEventListener('click', function() {
-            makeExpenseCellEditable(this, expense, 'description');
-          });
-          tr.appendChild(descriptionCell);
-          // Monto
-          const amountCell = document.createElement('td');
-          amountCell.className = 'editable-cell text-end';
-          amountCell.dataset.id = expense.id;
-          amountCell.dataset.field = 'amount';
-          amountCell.textContent = `$${formatNumberWithDots(expense.amount)}`;
-          amountCell.addEventListener('click', function() {
-            makeExpenseCellEditable(this, expense, 'amount');
-          });
-          tr.appendChild(amountCell);
-          // Acciones
-          const actionsCell = document.createElement('td');
-          actionsCell.className = 'text-center';
-          const deleteIcon = document.createElement('i');
-          deleteIcon.className = 'fas fa-trash delete-icon';
-          deleteIcon.dataset.id = expense.id;
-          deleteIcon.title = 'Eliminar';
-          deleteIcon.addEventListener('click', function() {
-            const id = this.dataset.id;
-            expenses = expenses.filter(expense => expense.id != id);
-            localStorage.setItem('expenses', JSON.stringify(expenses));
-            updateExpensesTable();
-            updateCharts();
-            updateTotalExpenses();
-          });
-          actionsCell.appendChild(deleteIcon);
-          tr.appendChild(actionsCell);
-          tableBody.appendChild(tr);
-        });
-        currentRowsElement.textContent = sortedExpenses.length;
-        totalRowsElement.textContent = sortedExpenses.length;
-      }
-      
-      function makeExpenseCellEditable(cell, expense, field) {
-        const oldValue = field === 'amount' ? expense.amount : expense[field];
-        const input = document.createElement(field === 'amount' ? 'input' : 'input');
-        input.type = field === 'amount' ? 'number' : 'text';
-        input.className = 'form-control form-control-sm';
-        input.value = oldValue;
-        if (field === 'amount') input.step = '0.01';
-        cell.innerHTML = '';
-        cell.appendChild(input);
-        input.focus();
-        input.select();
-        input.addEventListener('blur', function() {
-          let newValue = input.value;
-          if (field === 'amount') {
-            newValue = parseFloat(newValue);
-            if (isNaN(newValue) || newValue <= 0) {
-              updateExpensesTable();
-              return;
-            }
-            expense.amount = newValue;
-          } else if (field === 'date') {
-            if (!newValue) {
-              updateExpensesTable();
-              return;
-            }
-            expense.date = newValue;
-          } else if (field === 'category') {
-            if (!newValue) {
-              updateExpensesTable();
-              return;
-            }
-            expense.category = newValue;
-          } else if (field === 'description') {
-            expense.description = newValue;
-          }
-          localStorage.setItem('expenses', JSON.stringify(expenses));
-          updateExpensesTable();
-          updateCharts();
-          updateTotalExpenses();
-        });
-        input.addEventListener('keypress', function(e) {
-          if (e.key === 'Enter') input.blur();
-        });
-      }
-      
-      // Function to update total expenses
-      function updateTotalExpenses() {
-        const totalElement = document.getElementById('totalExpenses');
-        const totalYearElement = document.getElementById('totalYear');
-        const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-        const currentYear = new Date().getFullYear();
-        const totalYear = expenses.reduce((sum, expense) => {
-          const expenseYear = new Date(expense.date).getFullYear();
-          return sum + (expenseYear === currentYear ? expense.amount : 0);
-        }, 0);
-        totalElement.textContent = `$${formatNumberWithDots(total)}`;
-        totalYearElement.textContent = `$${formatNumberWithDots(totalYear)}`;
-      }
-      
-      // Function to update charts
-      function updateCharts() {
-        // Show loaders
-        document.getElementById('monthlyChartLoader').style.display = "";
-        document.getElementById('timelineChartLoader').style.display = '';
-        setTimeout(() => {
-          document.getElementById('monthlyChartLoader').style.display = 'none';
-          document.getElementById('timelineChartLoader').style.display = 'none';
-          const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
-          const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-          const timelineCtx = document.getElementById('timelineChart').getContext('2d');
-          if (window.monthlyChart && typeof window.monthlyChart.destroy === 'function') window.monthlyChart.destroy();
-          if (window.categoryChart && typeof window.categoryChart.destroy === 'function') window.categoryChart.destroy();
-          if (window.timelineChart && typeof window.timelineChart.destroy === 'function') window.timelineChart.destroy();
-          const monthlyData = processMonthlyData();
-          const categoryData = processCategoryData();
-          const timelineData = processTimelineData();
-          window.monthlyChart = new Chart(monthlyCtx, {
-            type: 'bar',
-            data: {
-              labels: monthlyData.labels,
-              datasets: [{
-                label: 'Gasto mensual',
-                data: monthlyData.data,
-                backgroundColor: monthlyData.colors,
-                borderColor: monthlyData.borderColors,
-                borderWidth: 1
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              locale: 'es-ES',
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  title: {
-                    display: true,
-                    text: 'Monto ($)',
-                    color: '#666',
-                    font: { family: 'inherit', size: 14, weight: 'bold' }
-                  },
-                  ticks: {
-                    callback: function(value) {
-                      return '$' + formatNumberWithDots(value);
-                    }
-                  }
+      // --- Actualizar tabla de gastos ---
+    function updateExpensesTable() {
+      // Usar la variable global expenses
+      const dateValue = dateFilter.value.toLowerCase();
+      const categoryValue = categoryFilter.value.toLowerCase();
+      const descriptionValue = descriptionFilter.value.toLowerCase();
+      const amountValue = amountFilter.value.toLowerCase();
+      const filtered = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).filter(expense => {
+        const dateMatch = expense.date.toLowerCase().includes(dateValue);
+        const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
+        const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
+        const amountMatch = String(expense.amount).toLowerCase().includes(amountValue);
+        return dateMatch && categoryMatch && descriptionMatch && amountMatch;
+      });
+      updateExpensesTableFiltered(filtered, currentPage);
+    }
+
+    // --- Actualizar totales ---
+    function updateTotalExpenses() {
+      const totalElement = document.getElementById('totalExpenses');
+      const totalYearElement = document.getElementById('totalYear');
+      const total = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+      const currentYear = new Date().getFullYear();
+      const totalYear = expenses.reduce((sum, expense) => {
+        const expenseYear = new Date(expense.date).getFullYear();
+        return sum + (expenseYear === currentYear ? Number(expense.amount) : 0);
+      }, 0);
+      totalElement.textContent = `$${formatNumberWithDots(total)}`;
+      totalYearElement.textContent = `$${formatNumberWithDots(totalYear)}`;
+    }
+
+    // --- Actualizar gráfica de categorías ---
+    function updateCharts() {
+      // Show loaders
+      document.getElementById('monthlyChartLoader').style.display = "";
+      document.getElementById('timelineChartLoader').style.display = '';
+      setTimeout(() => {
+        document.getElementById('monthlyChartLoader').style.display = 'none';
+        document.getElementById('timelineChartLoader').style.display = 'none';
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+        if (window.monthlyChart && typeof window.monthlyChart.destroy === 'function') window.monthlyChart.destroy();
+        if (window.categoryChart && typeof window.categoryChart.destroy === 'function') window.categoryChart.destroy();
+        if (window.timelineChart && typeof window.timelineChart.destroy === 'function') window.timelineChart.destroy();
+        const monthlyData = processMonthlyData();
+        const categoryData = processCategoryData();
+        const timelineData = processTimelineData();
+        window.monthlyChart = new Chart(monthlyCtx, {
+          type: 'bar',
+          data: {
+            labels: monthlyData.labels,
+            datasets: [{
+              label: 'Gasto mensual',
+              data: monthlyData.data,
+              backgroundColor: monthlyData.colors,
+              borderColor: monthlyData.borderColors,
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            locale: 'es-ES',
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Monto ($)',
+                  color: '#666',
+                  font: { family: 'inherit', size: 14, weight: 'bold' }
                 },
-                x: {
-                  title: {
-                    display: true,
-                    text: 'Mes',
-                    color: '#666',
-                    font: { family: 'inherit', size: 14, weight: 'bold' }
+                ticks: {
+                  callback: function(value) {
+                    return '$' + formatNumberWithDots(value);
                   }
                 }
               },
-              plugins: {
-                legend: {
-                  display: false,
-                  labels: { color: '#666', font: { family: 'inherit', size: 13 } }
-                },
-                tooltip: {
-                  callbacks: {
-                    label: function(context) {
-                      return 'Gasto: $' + formatNumberWithDots(context.raw);
-                    }
-                  },
-                  titleColor: '#333',
-                  bodyColor: '#333',
-                  footerColor: '#333'
-                },
-                  title: {
-                    display: false
-                  }
+              x: {
+                title: {
+                  display: true,
+                  text: 'Mes',
+                  color: '#666',
+                  font: { family: 'inherit', size: 14, weight: 'bold' }
                 }
-              } // <-- Cierra el objeto options
-            } // <-- Cierra el objeto pasado a new Chart
-          ); // <-- Cierra la llamada a new Chart
-          window.timelineChart = new Chart(timelineCtx, {
-            type: 'line',
-            data: {
-              labels: timelineData.labels,
-              datasets: [{
-                label: 'Gasto acumulado',
-                data: timelineData.data,
-                backgroundColor: 'rgba(244, 67, 54, 0.2)',
-                borderColor: 'rgba(244, 67, 54, 1)',
-                borderWidth: 2,
-                tension: 0.3,
-                fill: true
-              }]
+              }
             },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              locale: 'es-ES',
-              scales: {
-                y: {
-                  beginAtZero: true,
-                  title: {
-                    display: true,
-                    text: 'Monto acumulado ($)',
-                    color: '#666',
-                    font: { family: 'inherit', size: 14, weight: 'bold' }
-                  },
-                  ticks: {
-                    callback: function(value) {
-                      return '$' + formatNumberWithDots(value);
-                    }
+            plugins: {
+              legend: {
+                display: false,
+                labels: { color: '#666', font: { family: 'inherit', size: 13 } }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return 'Gasto: $' + formatNumberWithDots(context.raw);
                   }
                 },
-                x: {
-                  title: {
-                    display: true,
-                    text: 'Fecha',
-                    color: '#666',
-                    font: { family: 'inherit', size: 14, weight: 'bold' }
+                titleColor: '#333',
+                bodyColor: '#333',
+                footerColor: '#333'
+              },
+                title: {
+                  display: false
+                }
+              }
+            } // <-- Cierra el objeto options
+          } // <-- Cierra el objeto pasado a new Chart
+        ); // <-- Cierra la llamada a new Chart
+        window.timelineChart = new Chart(timelineCtx, {
+          type: 'line',
+          data: {
+            labels: timelineData.labels,
+            datasets: [{
+              label: 'Gasto acumulado',
+              data: timelineData.data,
+              backgroundColor: 'rgba(244, 67, 54, 0.2)',
+              borderColor: 'rgba(244, 67, 54, 1)',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            locale: 'es-ES',
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Monto acumulado ($)',
+                  color: '#666',
+                  font: { family: 'inherit', size: 14, weight: 'bold' }
+                },
+                ticks: {
+                  callback: function(value) {
+                    return '$' + formatNumberWithDots(value);
                   }
                 }
               },
-              plugins: {
-                legend: {
-                  display: false,
-                  labels: { color: '#666', font: { family: 'inherit', size: 13 } }
+              x: {
+                title: {
+                  display: true,
+                  text: 'Fecha',
+                  color: '#666',
+                  font: { family: 'inherit', size: 14, weight: 'bold' }
+                }
+              }
+            },
+            plugins: {
+              legend: {
+                display: false,
+                labels: { color: '#666', font: { family: 'inherit', size: 13 } }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return 'Acumulado: $' + formatNumberWithDots(context.raw);
+                  }
                 },
-                tooltip: {
-                  callbacks: {
-                    label: function(context) {
-                      return 'Acumulado: $' + formatNumberWithDots(context.raw);
-                    }
-                  },
-                  titleColor: '#333',
-                  bodyColor: '#333',
-                  footerColor: '#333'
-                },
+                titleColor: '#333',
+                bodyColor: '#333',
+                footerColor: '#333'
+              },
                 title: {
                   display: false
                 }
@@ -1964,6 +1847,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
       }
       
+           
       // Initialize table filters
       const dateFilter = document.getElementById('dateFilter');
       const categoryFilter = document.getElementById('categoryFilter');
@@ -2128,6 +2012,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Initialize the UI
       updateExpensesTable();
       updateCharts();
+      updateTotalExpenses();
 
       // Inicializa el gráfico de ingresos (barra)
       const incomeBarCanvas = document.getElementById('incomeBarChart');
@@ -2225,52 +2110,28 @@ document.addEventListener('DOMContentLoaded', function() {
             labels: categoryData.labels,
             datasets: [{
               data: categoryData.data,
-              backgroundColor: [
-                '#43a047', '#1e88e5', '#fbc02d', '#e53935', '#8e24aa', '#00acc1', '#f4511e', '#3949ab', '#6d4c41', '#c0ca33', '#5e35b1', '#00897b', '#fdd835', '#fb8c00', '#90a4ae'
-              ],
-              borderColor: '#fff',
-              borderWidth: 3
+              backgroundColor: categoryData.colors,
+              borderColor: categoryData.borderColors,
+              borderWidth: 2
             }]
           },
           options: {
             responsive: true,
-            animation: { animateRotate: true, duration: 400, easing: 'easeOutQuart' }, // Reduce duración animación
             plugins: {
-              legend: {
-                display: true,
-                position: 'top',
-                align: 'center',
-                labels: {
-                  color: document.body.classList.contains('dark-mode') ? '#eee' : '#333',
-                  font: { family: 'inherit', size: 14, weight: 'bold' },
-                  boxWidth: 20,
-                  boxHeight: 20,
-                  usePointStyle: true,
-                  pointStyle: 'rectRounded',
-                  padding: 18
-                }
-              },
+              legend: { position: 'bottom', labels: { color: '#666', font: { family: 'inherit', size: 13 } } },
               tooltip: {
-                backgroundColor: document.body.classList.contains('dark-mode') ? '#222' : '#fff',
-                titleColor: document.body.classList.contains('dark-mode') ? '#fff' : '#222',
-                bodyColor: document.body.classList.contains('dark-mode') ? '#fff' : '#222',
-                borderColor: '#43a047',
-                borderWidth: 2,
-                padding: 16,
-                titleFont: { size: 18, weight: 'bold', family: 'inherit' },
-                bodyFont: { size: 18, weight: 'bold', family: 'inherit' },
                 callbacks: {
                   label: function(context) {
-                    return `${context.label}: $${context.raw.toLocaleString('es-CO')}`;
+                    const label = context.label || '';
+                    const value = context.raw;
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = Math.round((value / total) * 100);
+                    return `${label}: $${value.toLocaleString('es-CO')} (${percentage}%)`;
                   }
                 }
               },
               title: {
-                display: true,
-                text: 'Category Breakdown',
-                color: document.body.classList.contains('dark-mode') ? '#fff' : '#222',
-                font: { family: 'inherit', size: 20, weight: 'bold' },
-                padding: { top: 10, bottom: 10 }
+                display: false
               }
             }
           }
@@ -2369,11 +2230,13 @@ document.addEventListener('DOMContentLoaded', function() {
                       const value = context.raw;
                       const total = context.dataset.data.reduce((a, b) => a + b, 0);
                       const percentage = Math.round((value / total) * 100);
-                      return `${label}: $${value.toLocaleString('es-AR')} (${percentage}%)`;
+                      return `${label}: $${value.toLocaleString('es-CO')} (${percentage}%)`;
                     }
                   }
                 },
-                title: { display: false }
+                title: {
+                  display: false
+                }
               }
             }
           });
