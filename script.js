@@ -1,7 +1,35 @@
 // Lógica para ingresos en billetes (antes en billIncomes.js)
- // --- Variables globales ---
+    // --- Variables globales ---
     let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
     window.expenses = expenses; // Para acceso global
+
+    const CATEGORY_MAP_REVERSE = {
+      'Alimentación': 'Food',
+      'Transporte': 'Transportation',
+      'Vivienda': 'Housing',
+      'Servicios': 'Utilities',
+      'Entretenimiento': 'Entertainment',
+      'Compras': 'Shopping',
+      'Salud': 'Healthcare',
+      'Viajes': 'Travel',
+      'Educación': 'Education',
+      'Otro': 'Other'
+    };
+    const ALL_CATEGORIES = Object.keys(CATEGORY_MAP_REVERSE);
+
+    const CATEGORY_LABEL_MAP = {
+      'Food': 'Alimentación',
+      'Transportation': 'Transporte',
+      'Housing': 'Vivienda',    
+      'Utilities': 'Servicios',
+      'Entertainment': 'Entretenimiento',
+      'Shopping': 'Compras',
+      'Healthcare': 'Salud',
+      'Travel': 'Viajes',
+      'Education': 'Educación',
+      'Other': 'Otro'
+    };
+
 
     // --- Lógica para ingresos en billetes ---
     function updateBillIncomeTable() {
@@ -1017,6 +1045,113 @@
         updateExpensesTableFiltered(filtered, 1);
       }
 
+    function makeExpenseCellEditable(cell, expense, field) {
+      if (cell.querySelector('input') || cell.querySelector('select')) return; // Already editing
+
+      const originalValue = expense[field];
+      let inputElement;
+
+      if (field === 'date') {
+        inputElement = document.createElement('input');
+        inputElement.type = 'text';
+        inputElement.className = 'form-control form-control-sm';
+        inputElement.value = originalValue;
+        // Inicializar Flatpickr en el input
+        flatpickr(inputElement, {
+          dateFormat: "Y-m-d",
+          defaultDate: originalValue,
+          onClose: function(selectedDates, dateStr) {
+            saveChange(dateStr);
+          }
+        });
+        inputElement.focus();
+      } else if (field === 'category') {
+        inputElement = document.createElement('select');
+        inputElement.className = 'form-select form-select-sm';
+
+        // Añadir todas las categorías existentes como opciones
+        ALL_CATEGORIES.forEach(catKey => {
+          const option = document.createElement('option');
+          option.value = catKey;
+          option.textContent = CATEGORY_LABEL_MAP[catKey]; // Usar el mapa para mostrar en español
+          if (expense.category === catKey) {
+            option.selected = true;
+          }
+          inputElement.appendChild(option);
+        });
+        // Si la categoría actual no está en la lista (ej. de importación), añadirla temporalmente
+        if (!ALL_CATEGORIES.includes(expense.category) && expense.category) {
+          const option = document.createElement('option');
+          option.value = expense.category;
+          option.textContent = expense.category;
+          option.selected = true;
+          inputElement.appendChild(option);
+        }
+        inputElement.addEventListener('change', () => saveChange(inputElement.value));
+        inputElement.addEventListener('blur', () => saveChange(inputElement.value));
+      } else if (field === 'amount') {
+        inputElement = document.createElement('input');
+        inputElement.type = 'number';
+        inputElement.className = 'form-control form-control-sm text-end';
+        inputElement.value = originalValue;
+        inputElement.step = '0.01';
+        inputElement.min = '0';
+      } else {
+        // description
+        inputElement = document.createElement('input');
+        inputElement.type = 'text';
+        inputElement.className = 'form-control form-control-sm';
+        inputElement.value = originalValue;
+      }
+
+      cell.innerHTML = '';
+      cell.appendChild(inputElement);
+      if (field !== 'date' && field !== 'category') { // Flatpickr y select manejan su propio foco/blur
+        inputElement.focus();
+        inputElement.select();
+      }
+
+      function saveChange(newValue) {
+        // Convertir de etiqueta de español a clave si es categoría
+        let  valueToSave = newValue;
+        if (field === 'category') {
+          valueToSave = CATEGORY_MAP_REVERSE[newValue] || newValue;
+        }
+
+        if (field === 'amount') {
+          valueToSave = parseFloat(newValue);
+          if (isNaN(valueToSave) || valueToSave < 0) {
+            valueToSave = originalValue; // Revertir si es inválido
+          }
+        }
+
+        if (valueToSave !== originalValue) {
+          const expenseIndex = expenses.findIndex(exp => exp.id === expense.id);
+          if (expenseIndex > -1) {
+            expenses[expenseIndex][field] = valueToSave;
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+            updateExpensesTable(); // Refrescar la tabla y gráficos
+            updateTotalExpenses();
+          }
+        } else {
+          // Si no hay cambio, simplemente restaurar la celda
+          updateExpensesTable();
+        }
+      }
+
+      if (field !== 'date' && field !== 'category') {
+        inputElement.addEventListener('blur', function() {
+          saveChange(this.value);
+        });
+
+        inputElement.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            this.blur();
+          }
+        });
+      }
+    }
+
       function updateExpensesTableFiltered(filteredExpenses, page = 1) {
         const tableBody = document.getElementById('expensesTableBody');
         const currentRowsElement = document.getElementById('currentRows');
@@ -1048,19 +1183,7 @@
           categoryCell.className = 'editable-cell';
           categoryCell.dataset.id = expense.id;
           categoryCell.dataset.field = 'category';
-          const categoryMap = {
-            'Food': 'Alimentación',
-            'Transportation': 'Transporte',
-            'Housing': 'Vivienda',
-            'Utilities': 'Servicios',
-            'Entertainment': 'Entretenimiento',
-            'Shopping': 'Compras',
-            'Healthcare': 'Salud',
-            'Travel': 'Viajes',
-            'Education': 'Educación',
-            'Other': 'Otro'
-          };
-          categoryCell.textContent = categoryMap[expense.category] || expense.category;
+          categoryCell.textContent = CATEGORY_LABEL_MAP[expense.category] || expense.category;
           categoryCell.addEventListener('click', function() {
             makeExpenseCellEditable(this, expense, 'category');
           });
