@@ -1070,20 +1070,24 @@
         inputElement.className = 'form-select form-select-sm';
 
         // Añadir todas las categorías existentes como opciones
-        ALL_CATEGORIES.forEach(catKey => {
+        // ALL_CATEGORIES contiene las etiquetas en español
+        ALL_CATEGORIES.forEach(categoryLabel => {
           const option = document.createElement('option');
-          option.value = catKey;
-          option.textContent = CATEGORY_LABEL_MAP[catKey]; // Usar el mapa para mostrar en español
-          if (expense.category === catKey) {
+          option.value = categoryLabel;
+          option.textContent = categoryLabel; // Mostrar directamente en español
+          // Comparar con la etiqueta en español del expense
+          const expenseLabel = CATEGORY_LABEL_MAP[expense.category] || expense.category;
+          if (expenseLabel === categoryLabel) {
             option.selected = true;
           }
           inputElement.appendChild(option);
         });
         // Si la categoría actual no está en la lista (ej. de importación), añadirla temporalmente
-        if (!ALL_CATEGORIES.includes(expense.category) && expense.category) {
+        const expenseLabel = CATEGORY_LABEL_MAP[expense.category] || expense.category;
+        if (!ALL_CATEGORIES.includes(expenseLabel) && expenseLabel) {
           const option = document.createElement('option');
-          option.value = expense.category;
-          option.textContent = expense.category;
+          option.value = expenseLabel;
+          option.textContent = expenseLabel;
           option.selected = true;
           inputElement.appendChild(option);
         }
