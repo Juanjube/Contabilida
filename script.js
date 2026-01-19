@@ -687,7 +687,7 @@
       // Show loaders
       document.getElementById('monthlyChartLoader').style.display = "";
       document.getElementById('timelineChartLoader').style.display = '';
-      setTimeout(() => {
+
         document.getElementById('monthlyChartLoader').style.display = 'none';
         document.getElementById('timelineChartLoader').style.display = 'none';
         const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
@@ -824,7 +824,6 @@
               }
             }
           });
-        }, 500);
       }
       
       // Function to process monthly data for chart
