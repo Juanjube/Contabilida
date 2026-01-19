@@ -332,10 +332,12 @@
           icon.classList.remove('fa-moon');
           icon.classList.add('fa-sun');
           localStorage.setItem('theme', 'dark');
+          themeToggle.setAttribute('aria-label', 'Activar modo claro');
         } else {
           icon.classList.remove('fa-sun');
           icon.classList.add('fa-moon');
           localStorage.setItem('theme', 'light');
+          themeToggle.setAttribute('aria-label', 'Activar modo oscuro');
         }
       });
       
@@ -344,6 +346,7 @@
         document.body.classList.add('dark-mode');
         icon.classList.remove('fa-moon');
         icon.classList.add('fa-sun');
+        themeToggle.setAttribute('aria-label', 'Activar modo claro');
       }
       
       // Load expenses from localStorage
