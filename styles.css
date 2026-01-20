@@ -554,6 +554,11 @@
       color: #f8f9fa;
       border-color: #495057;
     }
+    .theme-icon.fa-sun::before {
+      content: "\f185";
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+    }
 
     /* Iconos o botones de acción en la tabla */
     body.dark-mode table.table .btn,
