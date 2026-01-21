@@ -323,18 +323,20 @@
       
       // Theme toggle functionality
       const themeToggle = document.getElementById('themeToggle');
-      const icon = themeToggle.querySelector('i');
+      const themeIcon = document.getElementById('themeIcon');
       
       themeToggle.addEventListener('click', function() {
         document.body.classList.toggle('dark-mode');
         
         if (document.body.classList.contains('dark-mode')) {
-          icon.classList.remove('fa-moon');
-          icon.classList.add('fa-sun');
+          themeIcon.classList.remove('fa-moon');
+          themeIcon.classList.add('fa-sun');
+          themeToggle.setAttribute('aria-label', 'Activate light mode');
           localStorage.setItem('theme', 'dark');
         } else {
-          icon.classList.remove('fa-sun');
-          icon.classList.add('fa-moon');
+          themeIcon.classList.remove('fa-sun');
+          themeIcon.classList.add('fa-moon');
+          themeToggle.setAttribute('aria-label', 'Activate dark mode');
           localStorage.setItem('theme', 'light');
         }
       });
@@ -342,8 +344,9 @@
       // Check for saved theme preference
       if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
-        icon.classList.remove('fa-moon');
-        icon.classList.add('fa-sun');
+        themeIcon.classList.remove('fa-moon');
+        themeIcon.classList.add('fa-sun');
+        themeToggle.setAttribute('aria-label', 'Activate light mode');
       }
       
       // Load expenses from localStorage
