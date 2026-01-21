@@ -1,5 +1,10 @@
 // Lógica para ingresos en billetes (antes en billIncomes.js)
     // --- Variables globales ---
+    function sanitizeHTML(text) {
+        const temp = document.createElement('div');
+        temp.textContent = text;
+        return temp.innerHTML;
+    }
     let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
     window.expenses = expenses; // Para acceso global
 
@@ -581,7 +586,7 @@
         html += `<tr><th><i class="fa-solid fa-calendar"></i> Fecha</th><th>Categoría</th><th>Descripción</th><th>Monto</th></tr>`;
         let total = 0;
         expenses.forEach(e => {
-          html += `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.description}</td><td>$${formatNumberWithDots(e.amount)}</td></tr>`;
+          html += `<tr><td>${sanitizeHTML(e.date)}</td><td>${sanitizeHTML(e.category)}</td><td>${sanitizeHTML(e.description)}</td><td>$${formatNumberWithDots(e.amount)}</td></tr>`;
           total += e.amount;
         });
         html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>$${formatNumberWithDots(total)}</th></tr>`;
