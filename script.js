@@ -1,5 +1,11 @@
 // Lógica para ingresos en billetes (antes en billIncomes.js)
     // --- Variables globales ---
+    // Función para sanitizar HTML y prevenir XSS
+    function sanitizeHTML(str) {
+      const temp = document.createElement('div');
+      temp.textContent = str;
+      return temp.innerHTML;
+    }
     let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
     window.expenses = expenses; // Para acceso global
 
@@ -219,10 +225,17 @@
 
         let html = `<h2 style='text-align:center;'>Resumen General</h2>`;
         // Gastos
-        const expensesTable = document.getElementById('expensesTable');
-        if (expensesTable) {
-          html += `<h3 style='text-align:center;'>Gastos</h3>` + prepareTableForPrint(expensesTable);
-        }
+        let expensesHtml = `<h3 style='text-align:center;'>Gastos</h3>`;
+        expensesHtml += `<table border='1' cellspacing='0' cellpadding='5' style='width:100%;margin:20px 0;text-align:center;'>`;
+        expensesHtml += `<tr><th><i class="fa-solid fa-calendar"></i> Fecha</th><th>Categoría</th><th>Descripción</th><th>Monto</th></tr>`;
+        let total = 0;
+        expenses.forEach(e => {
+          expensesHtml += `<tr><td>${sanitizeHTML(e.date)}</td><td>${sanitizeHTML(e.category)}</td><td>${sanitizeHTML(e.description)}</td><td>$${formatNumberWithDots(e.amount)}</td></tr>`;
+          total += e.amount;
+        });
+        expensesHtml += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>$${formatNumberWithDots(total)}</th></tr>`;
+        expensesHtml += `</table>`;
+        html += expensesHtml;
         // Monedas
         const coinTable = document.getElementById('coinIncomeTable');
         if (coinTable) {
@@ -581,7 +594,7 @@
         html += `<tr><th><i class="fa-solid fa-calendar"></i> Fecha</th><th>Categoría</th><th>Descripción</th><th>Monto</th></tr>`;
         let total = 0;
         expenses.forEach(e => {
-          html += `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.description}</td><td>$${formatNumberWithDots(e.amount)}</td></tr>`;
+          html += `<tr><td>${sanitizeHTML(e.date)}</td><td>${sanitizeHTML(e.category)}</td><td>${sanitizeHTML(e.description)}</td><td>$${formatNumberWithDots(e.amount)}</td></tr>`;
           total += e.amount;
         });
         html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>$${formatNumberWithDots(total)}</th></tr>`;
