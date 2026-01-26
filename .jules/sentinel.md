@@ -1,0 +1,4 @@
+## 2024-07-29 - Initial XSS Vulnerability Discovery
+**Vulnerability:** Cross-Site Scripting (XSS) in the application's "Print" functionality. User-controlled input, such as expense descriptions, is rendered directly into a new window using `document.write` without any HTML escaping.
+**Learning:** The application consistently uses `innerHTML` and `document.write` for rendering dynamic content, creating multiple XSS vectors. The primary table view was safe because it used `.textContent`, but this security practice was not applied to derivative views like the print pages.
+**Prevention:** Enforce a strict policy of sanitizing all user-provided data before rendering it as HTML. Create and use a single, reliable sanitization utility throughout the application instead of relying on ad-hoc implementations.
