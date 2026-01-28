@@ -1,3 +1,13 @@
+// Debounce function to limit the rate at which a function gets called.
+function debounce(func, delay) {
+  let timeout;
+  return function(...args) {
+    const context = this;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(context, args), delay);
+  };
+}
+
 // Lógica para ingresos en billetes (antes en billIncomes.js)
     // --- Variables globales ---
     let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
@@ -991,8 +1001,9 @@
       dateFilter.addEventListener('change', filterTable);
       // categoryFilter is a select -> listen for change
       categoryFilter.addEventListener('change', filterTable);
-      descriptionFilter.addEventListener('input', filterTable);
-      amountFilter.addEventListener('input', filterTable);
+      // Performance optimization: Debounce input events to avoid re-filtering on every keystroke.
+      descriptionFilter.addEventListener('input', debounce(filterTable, 300));
+      amountFilter.addEventListener('input', debounce(filterTable, 300));
 
       // Populate categoryFilter options from the main expenseCategory select
       const expenseCategory = document.getElementById('expenseCategory');
