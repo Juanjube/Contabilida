@@ -80,13 +80,16 @@
         tr.appendChild(tdTotal);
         // Botón eliminar
         const tdDelete = document.createElement('td');
-        const deleteBtn = document.createElement('i');
-        deleteBtn.className = 'fas fa-trash delete-icon';
-        deleteBtn.style.cursor = 'pointer';
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn-action-delete delete-icon';
+        deleteBtn.setAttribute('aria-label', 'Eliminar ingreso');
         deleteBtn.title = 'Eliminar ingreso';
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
         deleteBtn.addEventListener('click', function() {
-          window.deleteBillIncome(b.type);
-          updateBillIncomeTable();
+          if (confirm('¿Estás seguro de que deseas eliminar este ingreso?')) {
+            window.deleteBillIncome(b.type);
+            updateBillIncomeTable();
+          }
         });
         tdDelete.appendChild(deleteBtn);
         tr.appendChild(tdDelete);
@@ -331,10 +334,12 @@
         if (document.body.classList.contains('dark-mode')) {
           icon.classList.remove('fa-moon');
           icon.classList.add('fa-sun');
+          themeToggle.setAttribute('aria-label', "Activar modo claro");
           localStorage.setItem('theme', 'dark');
         } else {
           icon.classList.remove('fa-sun');
           icon.classList.add('fa-moon');
+          themeToggle.setAttribute('aria-label', "Activar modo oscuro");
           localStorage.setItem('theme', 'light');
         }
       });
@@ -344,6 +349,7 @@
         document.body.classList.add('dark-mode');
         icon.classList.remove('fa-moon');
         icon.classList.add('fa-sun');
+        themeToggle.setAttribute('aria-label', "Activar modo claro");
       }
       
       // Load expenses from localStorage
@@ -422,14 +428,17 @@
           tr.appendChild(tdTotal);
           // Botón eliminar
           const tdDelete = document.createElement('td');
-          const deleteBtn = document.createElement('i');
-          deleteBtn.className = 'fas fa-trash delete-icon';
-          deleteBtn.style.cursor = 'pointer';
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'btn-action-delete delete-icon';
+          deleteBtn.setAttribute('aria-label', 'Eliminar ingreso');
           deleteBtn.title = 'Eliminar ingreso';
+          deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
           deleteBtn.addEventListener('click', function() {
-            coinIncomes.splice(idx, 1);
-            localStorage.setItem('coinIncomes', JSON.stringify(coinIncomes));
-            updateCoinIncomeTable();
+            if (confirm('¿Estás seguro de que deseas eliminar este ingreso?')) {
+              coinIncomes.splice(idx, 1);
+              localStorage.setItem('coinIncomes', JSON.stringify(coinIncomes));
+              updateCoinIncomeTable();
+            }
           });
           tdDelete.appendChild(deleteBtn);
           tr.appendChild(tdDelete);
@@ -1215,19 +1224,22 @@
           // Acciones
           const actionsCell = document.createElement('td');
           actionsCell.className = 'text-center';
-          const deleteIcon = document.createElement('i');
-          deleteIcon.className = 'fas fa-trash delete-icon';
-          deleteIcon.dataset.id = expense.id;
-          deleteIcon.title = 'Eliminar';
-          deleteIcon.addEventListener('click', function() {
-            const id = this.dataset.id;
-            expenses = expenses.filter(exp => exp.id != id);
-            localStorage.setItem('expenses', JSON.stringify(expenses));
-            filterTable(); // Refiltrar y repaginar
-            updateCharts();
-            updateTotalExpenses();
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'btn-action-delete delete-icon';
+          deleteBtn.setAttribute('aria-label', 'Eliminar');
+          deleteBtn.title = 'Eliminar';
+          deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+          deleteBtn.addEventListener('click', function() {
+            if (confirm('¿Estás seguro de que deseas eliminar este registro?')) {
+              const id = expense.id;
+              expenses = expenses.filter(exp => exp.id != id);
+              localStorage.setItem('expenses', JSON.stringify(expenses));
+              filterTable(); // Refiltrar y repaginar
+              updateCharts();
+              updateTotalExpenses();
+            }
           });
-          actionsCell.appendChild(deleteIcon);
+          actionsCell.appendChild(deleteBtn);
           tr.appendChild(actionsCell);
           tableBody.appendChild(tr);
         });
