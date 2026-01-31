@@ -634,62 +634,68 @@
       let currentPage = 1;
       const rowsPerPage = 5;
 
-      // Function to update expenses table
-      function updateExpensesTable() {
-        // Aplicar filtros actuales y paginar
+      // Optimized function to update and filter expenses table
+      function updateExpensesTable(page = currentPage) {
+        currentPage = page;
+
         const dateValue = dateFilter.value.toLowerCase();
         const categoryValue = categoryFilter.value.toLowerCase();
         const descriptionValue = descriptionFilter.value.toLowerCase();
         const amountValue = amountFilter.value.toLowerCase();
-        const filtered = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).filter(expense => {
+
+        // Performance optimization: filter BEFORE sorting to reduce number of items to sort
+        const filtered = expenses.filter(expense => {
           const dateMatch = expense.date.toLowerCase().includes(dateValue);
           const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
           const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
           const amountMatch = String(expense.amount).toLowerCase().includes(amountValue);
           return dateMatch && categoryMatch && descriptionMatch && amountMatch;
         });
+
+        // Performance optimization: use string comparison for date sorting (YYYY-MM-DD descending)
+        // This is significantly faster than creating thousands of Date objects on every sort
+        filtered.sort((a, b) => (a.date < b.date ? 1 : (a.date > b.date ? -1 : 0)));
+
         updateExpensesTableFiltered(filtered, currentPage);
       }
-
-      // --- Actualizar tabla de gastos ---
-    function updateExpensesTable() {
-      // Usar la variable global expenses
-      const dateValue = dateFilter.value.toLowerCase();
-      const categoryValue = categoryFilter.value.toLowerCase();
-      const descriptionValue = descriptionFilter.value.toLowerCase();
-      const amountValue = amountFilter.value.toLowerCase();
-      const filtered = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).filter(expense => {
-        const dateMatch = expense.date.toLowerCase().includes(dateValue);
-        const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
-        const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
-        const amountMatch = String(expense.amount).toLowerCase().includes(amountValue);
-        return dateMatch && categoryMatch && descriptionMatch && amountMatch;
-      });
-      updateExpensesTableFiltered(filtered, currentPage);
-    }
 
     // --- Actualizar totales ---
     function updateTotalExpenses() {
       const totalElement = document.getElementById('totalExpenses');
       const totalYearElement = document.getElementById('totalYear');
-      const total = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
-      const currentYear = new Date().getFullYear();
-      const totalYear = expenses.reduce((sum, expense) => {
-        const expenseYear = new Date(expense.date).getFullYear();
-        return sum + (expenseYear === currentYear ? Number(expense.amount) : 0);
-      }, 0);
+
+      const currentYear = new Date().getFullYear().toString();
+      let total = 0;
+      let totalYear = 0;
+
+      // Single pass over expenses to calculate both totals efficiently
+      expenses.forEach(expense => {
+        const amount = Number(expense.amount) || 0;
+        total += amount;
+        // Efficiently check for current year using string comparison
+        if (expense.date && expense.date.startsWith(currentYear)) {
+          totalYear += amount;
+        }
+      });
+
       totalElement.textContent = `$${formatNumberWithDots(total)}`;
       totalYearElement.textContent = `$${formatNumberWithDots(totalYear)}`;
     }
 
     // --- Actualizar gráfica de categorías ---
     function updateCharts() {
+      // Performance optimization: skip rendering if the dashboard tab is not active.
+      // The 'shown.bs.tab' event listener will trigger an update when the tab becomes visible.
+      const dashboardTab = document.getElementById('dashboard-tab');
+      if (dashboardTab && !dashboardTab.classList.contains('active')) return;
+
       // Show loaders
       document.getElementById('monthlyChartLoader').style.display = "";
       document.getElementById('timelineChartLoader').style.display = '';
       setTimeout(() => {
         document.getElementById('monthlyChartLoader').style.display = 'none';
         document.getElementById('timelineChartLoader').style.display = 'none';
+
         const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
         const categoryCtx = document.getElementById('categoryChart').getContext('2d');
         const timelineCtx = document.getElementById('timelineChart').getContext('2d');
@@ -986,13 +992,23 @@
       const descriptionFilter = document.getElementById('descriptionFilter');
       const amountFilter = document.getElementById('amountFilter');
       
+      // Debounce helper to limit the frequency of function calls
+      function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+      }
+
       // Add filter event listeners
       // dateFilter uses flatpickr which triggers change; use change for consistency
       dateFilter.addEventListener('change', filterTable);
       // categoryFilter is a select -> listen for change
       categoryFilter.addEventListener('change', filterTable);
-      descriptionFilter.addEventListener('input', filterTable);
-      amountFilter.addEventListener('input', filterTable);
+      // Use debounce for text inputs to avoid redundant filtering on every keystroke
+      descriptionFilter.addEventListener('input', debounce(filterTable, 300));
+      amountFilter.addEventListener('input', debounce(filterTable, 300));
 
       // Populate categoryFilter options from the main expenseCategory select
       const expenseCategory = document.getElementById('expenseCategory');
@@ -1028,21 +1044,8 @@
       }
       
       function filterTable() {
-        const dateValue = dateFilter.value.toLowerCase();
-        const categoryValue = categoryFilter.value.toLowerCase();
-        const descriptionValue = descriptionFilter.value.toLowerCase();
-        const amountValue = amountFilter.value.toLowerCase();
-
-        // Filtrar gastos y paginar
-        const filtered = [...expenses].filter(expense => {
-          const dateMatch = expense.date.toLowerCase().includes(dateValue);
-          const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
-          const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
-          const amountMatch = String(expense.amount).toLowerCase().includes(amountValue);
-          return dateMatch && categoryMatch && descriptionMatch && amountMatch;
-        });
-        // Actualizar tabla con los filtrados y reiniciar a la página 1
-        updateExpensesTableFiltered(filtered, 1);
+        // Reuse optimized updateExpensesTable and reset to page 1
+        updateExpensesTable(1);
       }
 
     function makeExpenseCellEditable(cell, expense, field) {

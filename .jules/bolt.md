@@ -1,0 +1,3 @@
+## 2026-01-31 - [Optimized Expense Filtering and Calculations]
+**Learning:** In this codebase, the table update logic was performing expensive operations redundantely. Sorting 1000 items with `new Date()` objects on every keystroke was a major bottleneck. Consolidating logic and filtering before sorting significantly improved performance.
+**Action:** Always check for redundant sorting/parsing in loops or event listeners. Filter data sets as early as possible before applying more expensive operations like sorting. Use string comparison for ISO-like dates (YYYY-MM-DD) to avoid expensive Date object instantiation.
