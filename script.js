@@ -80,11 +80,13 @@
         tr.appendChild(tdTotal);
         // Botón eliminar
         const tdDelete = document.createElement('td');
-        const deleteBtn = document.createElement('i');
-        deleteBtn.className = 'fas fa-trash delete-icon';
-        deleteBtn.style.cursor = 'pointer';
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn-action-delete';
+        deleteBtn.setAttribute('aria-label', 'Eliminar ingreso de billete');
         deleteBtn.title = 'Eliminar ingreso';
+        deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
         deleteBtn.addEventListener('click', function() {
+          if (!confirm('¿Estás seguro de que deseas eliminar este ingreso?')) return;
           window.deleteBillIncome(b.type);
           updateBillIncomeTable();
         });
@@ -318,6 +320,14 @@
         header.addEventListener('click', function() {
           const card = this.closest('.collapsible-card');
           card.classList.toggle('collapsed');
+          const isExpanded = !card.classList.contains('collapsed');
+          this.setAttribute('aria-expanded', isExpanded);
+        });
+        header.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            this.click();
+          }
         });
       });
       
@@ -331,10 +341,12 @@
         if (document.body.classList.contains('dark-mode')) {
           icon.classList.remove('fa-moon');
           icon.classList.add('fa-sun');
+          themeToggle.setAttribute('aria-label', 'Activar modo claro');
           localStorage.setItem('theme', 'dark');
         } else {
           icon.classList.remove('fa-sun');
           icon.classList.add('fa-moon');
+          themeToggle.setAttribute('aria-label', 'Activar modo oscuro');
           localStorage.setItem('theme', 'light');
         }
       });
@@ -344,6 +356,7 @@
         document.body.classList.add('dark-mode');
         icon.classList.remove('fa-moon');
         icon.classList.add('fa-sun');
+        themeToggle.setAttribute('aria-label', 'Activar modo claro');
       }
       
       // Load expenses from localStorage
@@ -422,11 +435,13 @@
           tr.appendChild(tdTotal);
           // Botón eliminar
           const tdDelete = document.createElement('td');
-          const deleteBtn = document.createElement('i');
-          deleteBtn.className = 'fas fa-trash delete-icon';
-          deleteBtn.style.cursor = 'pointer';
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'btn-action-delete';
+          deleteBtn.setAttribute('aria-label', 'Eliminar ingreso de moneda');
           deleteBtn.title = 'Eliminar ingreso';
+          deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
           deleteBtn.addEventListener('click', function() {
+            if (!confirm('¿Estás seguro de que deseas eliminar este ingreso?')) return;
             coinIncomes.splice(idx, 1);
             localStorage.setItem('coinIncomes', JSON.stringify(coinIncomes));
             updateCoinIncomeTable();
@@ -1215,19 +1230,21 @@
           // Acciones
           const actionsCell = document.createElement('td');
           actionsCell.className = 'text-center';
-          const deleteIcon = document.createElement('i');
-          deleteIcon.className = 'fas fa-trash delete-icon';
-          deleteIcon.dataset.id = expense.id;
-          deleteIcon.title = 'Eliminar';
-          deleteIcon.addEventListener('click', function() {
-            const id = this.dataset.id;
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'btn-action-delete';
+          deleteBtn.setAttribute('aria-label', 'Eliminar gasto');
+          deleteBtn.title = 'Eliminar';
+          deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+          deleteBtn.addEventListener('click', function() {
+            if (!confirm('¿Estás seguro de que deseas eliminar este gasto?')) return;
+            const id = expense.id;
             expenses = expenses.filter(exp => exp.id != id);
             localStorage.setItem('expenses', JSON.stringify(expenses));
             filterTable(); // Refiltrar y repaginar
             updateCharts();
             updateTotalExpenses();
           });
-          actionsCell.appendChild(deleteIcon);
+          actionsCell.appendChild(deleteBtn);
           tr.appendChild(actionsCell);
           tableBody.appendChild(tr);
         });
