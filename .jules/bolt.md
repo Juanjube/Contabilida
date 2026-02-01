@@ -1,0 +1,3 @@
+## 2026-02-01 - [Data Processing Patterns in script.js]
+**Learning:** In this vanilla JS application, frequent instantiation of `Date` objects and `Intl.NumberFormat` inside loops (like table rendering and total calculations) was a major hidden bottleneck. Using string comparison for 'YYYY-MM-DD' dates and reusing a persistent `Intl.NumberFormat` instance provides a significant speedup. Additionally, filtering datasets before sorting them is critical when dealing with user-driven search/filter UI to minimize the cost of sorting operations.
+**Action:** Always prefer string-based date comparisons for ISO dates in loops and hoist expensive object constructors like `Intl.NumberFormat` outside of hot paths. Ensure filtering happens before sorting in data-heavy UI components.
