@@ -1,3 +1,19 @@
+// --- Performance-optimized formatting ---
+const numberFormatter = new Intl.NumberFormat('es-CO', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/**
+ * Optimized number formatting using a hoisted Intl.NumberFormat instance.
+ * Significant performance improvement over repeated .toLocaleString() calls in loops.
+ */
+function formatNumberWithDots(number) {
+  if (typeof number !== 'number') number = parseFloat(number);
+  if (isNaN(number)) return '';
+  return numberFormatter.format(number);
+}
+
 // Lógica para ingresos en billetes (antes en billIncomes.js)
     // --- Variables globales ---
     let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
@@ -622,62 +638,49 @@
         });
       });
       
-      // Function to format numbers with dot as thousands separator
-      function formatNumberWithDots(number) {
-        // Convierte a string con separador de miles punto y decimales coma
-        if (typeof number !== 'number') number = parseFloat(number);
-        if (isNaN(number)) return '';
-        return number.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      }
-      
       // Estado de paginación
       let currentPage = 1;
       const rowsPerPage = 5;
 
-      // Function to update expenses table
+      /**
+       * Optimized expenses table update.
+       * 1. Filters before sorting to minimize sort operations on the dataset.
+       * 2. Uses string comparison for 'YYYY-MM-DD' dates instead of expensive new Date() objects.
+       */
       function updateExpensesTable() {
-        // Aplicar filtros actuales y paginar
         const dateValue = dateFilter.value.toLowerCase();
         const categoryValue = categoryFilter.value.toLowerCase();
         const descriptionValue = descriptionFilter.value.toLowerCase();
         const amountValue = amountFilter.value.toLowerCase();
-        const filtered = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).filter(expense => {
+
+        const filtered = expenses.filter(expense => {
           const dateMatch = expense.date.toLowerCase().includes(dateValue);
           const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
           const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
           const amountMatch = String(expense.amount).toLowerCase().includes(amountValue);
           return dateMatch && categoryMatch && descriptionMatch && amountMatch;
         });
+
+        // Sort descending: string comparison is much faster than parsing dates
+        filtered.sort((a, b) => b.date.localeCompare(a.date));
+
         updateExpensesTableFiltered(filtered, currentPage);
       }
 
-      // --- Actualizar tabla de gastos ---
-    function updateExpensesTable() {
-      // Usar la variable global expenses
-      const dateValue = dateFilter.value.toLowerCase();
-      const categoryValue = categoryFilter.value.toLowerCase();
-      const descriptionValue = descriptionFilter.value.toLowerCase();
-      const amountValue = amountFilter.value.toLowerCase();
-      const filtered = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).filter(expense => {
-        const dateMatch = expense.date.toLowerCase().includes(dateValue);
-        const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
-        const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
-        const amountMatch = String(expense.amount).toLowerCase().includes(amountValue);
-        return dateMatch && categoryMatch && descriptionMatch && amountMatch;
-      });
-      updateExpensesTableFiltered(filtered, currentPage);
-    }
-
-    // --- Actualizar totales ---
+    /**
+     * Optimized total updates using string manipulation for year filtering.
+     */
     function updateTotalExpenses() {
       const totalElement = document.getElementById('totalExpenses');
       const totalYearElement = document.getElementById('totalYear');
       const total = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
-      const currentYear = new Date().getFullYear();
+
+      const currentYearStr = new Date().getFullYear().toString();
       const totalYear = expenses.reduce((sum, expense) => {
-        const expenseYear = new Date(expense.date).getFullYear();
-        return sum + (expenseYear === currentYear ? Number(expense.amount) : 0);
+        const isCurrentYear = expense.date && expense.date.startsWith(currentYearStr);
+        return sum + (isCurrentYear ? Number(expense.amount) : 0);
       }, 0);
+
       totalElement.textContent = `$${formatNumberWithDots(total)}`;
       totalYearElement.textContent = `$${formatNumberWithDots(totalYear)}`;
     }
@@ -828,19 +831,21 @@
       }
       
       // Function to process monthly data for chart
+      /**
+       * Optimized monthly data processing using string manipulation.
+       */
       function processMonthlyData() {
         const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
         const monthlyTotals = Array(12).fill(0);
+        const currentYearStr = new Date().getFullYear().toString();
         
-        // Get current year
-        const currentYear = new Date().getFullYear();
-        
-        // Calculate monthly totals for current year
         expenses.forEach(expense => {
-          const expenseDate = new Date(expense.date);
-          if (expenseDate.getFullYear() === currentYear) {
-            const month = expenseDate.getMonth();
-            monthlyTotals[month] += expense.amount;
+          if (expense.date && expense.date.startsWith(currentYearStr)) {
+            // Extract month from YYYY-MM-DD
+            const month = parseInt(expense.date.substring(5, 7), 10) - 1;
+            if (month >= 0 && month < 12) {
+              monthlyTotals[month] += expense.amount;
+            }
           }
         });
         
@@ -907,15 +912,14 @@
           'Education': 'Educación',
           'Other': 'Otro'
         };
-        // Get current month and year
+        // Get current month and year string (YYYY-MM)
         const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
+        const currentYearMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
         // Sumar todas las categorías iguales (en español o inglés)
         expenses.forEach(expense => {
-          const expenseDate = new Date(expense.date);
-          let key = categoryKeyMap[expense.category] || expense.category;
-          if (expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear) {
+          if (expense.date && expense.date.startsWith(currentYearMonthStr)) {
+            let key = categoryKeyMap[expense.category] || expense.category;
             if (!categoryTotals[key]) {
               categoryTotals[key] = 0;
             }
@@ -946,9 +950,12 @@
       }
       
       // Function to process timeline data for chart
+      /**
+       * Optimized timeline data processing using string-based sorting.
+       */
       function processTimelineData() {
-        // Sort expenses by date
-        const sortedExpenses = [...expenses].sort((a, b) => new Date(a.date) - new Date(b.date));
+        // Sort expenses by date ascending using string comparison for chronological timeline
+        const sortedExpenses = [...expenses].sort((a, b) => a.date.localeCompare(b.date));
         
         // Group by date
         const dailyTotals = {};
@@ -1027,22 +1034,12 @@
         });
       }
       
+      /**
+       * Triggered by filter inputs. Resets to first page and updates table.
+       */
       function filterTable() {
-        const dateValue = dateFilter.value.toLowerCase();
-        const categoryValue = categoryFilter.value.toLowerCase();
-        const descriptionValue = descriptionFilter.value.toLowerCase();
-        const amountValue = amountFilter.value.toLowerCase();
-
-        // Filtrar gastos y paginar
-        const filtered = [...expenses].filter(expense => {
-          const dateMatch = expense.date.toLowerCase().includes(dateValue);
-          const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
-          const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
-          const amountMatch = String(expense.amount).toLowerCase().includes(amountValue);
-          return dateMatch && categoryMatch && descriptionMatch && amountMatch;
-        });
-        // Actualizar tabla con los filtrados y reiniciar a la página 1
-        updateExpensesTableFiltered(filtered, 1);
+        currentPage = 1;
+        updateExpensesTable();
       }
 
     function makeExpenseCellEditable(cell, expense, field) {
