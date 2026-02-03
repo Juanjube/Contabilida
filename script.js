@@ -30,6 +30,20 @@
       'Other': 'Otro'
     };
 
+    // Reusable Intl.NumberFormat instance for better performance in loops
+    const numberFormatter = new Intl.NumberFormat('es-CO', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+    // Debounce utility to limit the rate of function execution
+    function debounce(func, wait) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
 
     // --- Lógica para ingresos en billetes ---
     function updateBillIncomeTable() {
@@ -623,11 +637,12 @@
       });
       
       // Function to format numbers with dot as thousands separator
+      // Optimized by using a shared Intl.NumberFormat instance
       function formatNumberWithDots(number) {
         // Convierte a string con separador de miles punto y decimales coma
         if (typeof number !== 'number') number = parseFloat(number);
         if (isNaN(number)) return '';
-        return number.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return numberFormatter.format(number);
       }
       
       // Estado de paginación
@@ -635,38 +650,24 @@
       const rowsPerPage = 5;
 
       // Function to update expenses table
+      // Optimized by filtering before sorting and using localeCompare for dates
       function updateExpensesTable() {
         // Aplicar filtros actuales y paginar
         const dateValue = dateFilter.value.toLowerCase();
         const categoryValue = categoryFilter.value.toLowerCase();
         const descriptionValue = descriptionFilter.value.toLowerCase();
         const amountValue = amountFilter.value.toLowerCase();
-        const filtered = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).filter(expense => {
+
+        const filtered = expenses.filter(expense => {
           const dateMatch = expense.date.toLowerCase().includes(dateValue);
           const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
           const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
           const amountMatch = String(expense.amount).toLowerCase().includes(amountValue);
           return dateMatch && categoryMatch && descriptionMatch && amountMatch;
-        });
+        }).sort((a, b) => b.date.localeCompare(a.date));
+
         updateExpensesTableFiltered(filtered, currentPage);
       }
-
-      // --- Actualizar tabla de gastos ---
-    function updateExpensesTable() {
-      // Usar la variable global expenses
-      const dateValue = dateFilter.value.toLowerCase();
-      const categoryValue = categoryFilter.value.toLowerCase();
-      const descriptionValue = descriptionFilter.value.toLowerCase();
-      const amountValue = amountFilter.value.toLowerCase();
-      const filtered = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).filter(expense => {
-        const dateMatch = expense.date.toLowerCase().includes(dateValue);
-        const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
-        const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
-        const amountMatch = String(expense.amount).toLowerCase().includes(amountValue);
-        return dateMatch && categoryMatch && descriptionMatch && amountMatch;
-      });
-      updateExpensesTableFiltered(filtered, currentPage);
-    }
 
     // --- Actualizar totales ---
     function updateTotalExpenses() {
@@ -991,8 +992,8 @@
       dateFilter.addEventListener('change', filterTable);
       // categoryFilter is a select -> listen for change
       categoryFilter.addEventListener('change', filterTable);
-      descriptionFilter.addEventListener('input', filterTable);
-      amountFilter.addEventListener('input', filterTable);
+      descriptionFilter.addEventListener('input', debounce(filterTable, 300));
+      amountFilter.addEventListener('input', debounce(filterTable, 300));
 
       // Populate categoryFilter options from the main expenseCategory select
       const expenseCategory = document.getElementById('expenseCategory');
@@ -1027,22 +1028,10 @@
         });
       }
       
+      // Refactored to delegate to optimized updateExpensesTable
       function filterTable() {
-        const dateValue = dateFilter.value.toLowerCase();
-        const categoryValue = categoryFilter.value.toLowerCase();
-        const descriptionValue = descriptionFilter.value.toLowerCase();
-        const amountValue = amountFilter.value.toLowerCase();
-
-        // Filtrar gastos y paginar
-        const filtered = [...expenses].filter(expense => {
-          const dateMatch = expense.date.toLowerCase().includes(dateValue);
-          const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
-          const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
-          const amountMatch = String(expense.amount).toLowerCase().includes(amountValue);
-          return dateMatch && categoryMatch && descriptionMatch && amountMatch;
-        });
-        // Actualizar tabla con los filtrados y reiniciar a la página 1
-        updateExpensesTableFiltered(filtered, 1);
+        currentPage = 1;
+        updateExpensesTable();
       }
 
     function makeExpenseCellEditable(cell, expense, field) {
