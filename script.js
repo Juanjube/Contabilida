@@ -315,9 +315,18 @@
       
       // Initialize collapsible cards
       document.querySelectorAll('.collapsible-card .card-header').forEach(header => {
-        header.addEventListener('click', function() {
-          const card = this.closest('.collapsible-card');
-          card.classList.toggle('collapsed');
+        const toggleCard = () => {
+          const card = header.closest('.collapsible-card');
+          const isCollapsed = card.classList.toggle('collapsed');
+          header.setAttribute('aria-expanded', !isCollapsed);
+        };
+
+        header.addEventListener('click', toggleCard);
+        header.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleCard();
+          }
         });
       });
       
@@ -331,10 +340,12 @@
         if (document.body.classList.contains('dark-mode')) {
           icon.classList.remove('fa-moon');
           icon.classList.add('fa-sun');
+          themeToggle.setAttribute('aria-label', 'Activar modo claro');
           localStorage.setItem('theme', 'dark');
         } else {
           icon.classList.remove('fa-sun');
           icon.classList.add('fa-moon');
+          themeToggle.setAttribute('aria-label', 'Activar modo oscuro');
           localStorage.setItem('theme', 'light');
         }
       });
@@ -344,6 +355,7 @@
         document.body.classList.add('dark-mode');
         icon.classList.remove('fa-moon');
         icon.classList.add('fa-sun');
+        themeToggle.setAttribute('aria-label', 'Activar modo claro');
       }
       
       // Load expenses from localStorage
