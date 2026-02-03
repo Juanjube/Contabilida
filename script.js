@@ -32,6 +32,11 @@
 
 
     // --- Lógica para ingresos en billetes ---
+    /**
+     * Actualiza la tabla de ingresos en billetes en el DOM.
+     * Lee los ingresos desde window.getBillIncomes(), construye filas con subtotal,
+     * calcula el total general, permite editar cantidades y eliminar entradas.
+     */
     function updateBillIncomeTable() {
       const billIncomeBody = document.getElementById('billIncomeBody');
       const billIncomeTotal = document.getElementById('billIncomeTotal');
@@ -374,8 +379,12 @@
         coinIncomeForm.reset();
       });
 
+      /**
+       * Actualiza la tabla de ingresos en monedas.
+       * Recalcula subtotales y total, construye las filas de la tabla y maneja edición/eliminación.
+       */
       function updateCoinIncomeTable() {
-        coinIncomeBody.innerHTML = '';
+        coinIncomeBody.innerHTML = ''; 
         let total = 0;
         const coinLabels = { '1000': '$1.000', '500': '$500', '200': '$200', '100': '$100', '50': '$50' };
         coinIncomes.forEach((c, idx) => {
@@ -622,7 +631,11 @@
         });
       });
       
-      // Function to format numbers with dot as thousands separator
+      /**
+       * Formatea un número con separador de miles (.) y dos decimales, usando locale 'es-CO'.
+       * number: número o string convertible a número.
+       * return: string formateado (ej. 1.234,56)
+       */
       function formatNumberWithDots(number) {
         // Convierte a string con separador de miles punto y decimales coma
         if (typeof number !== 'number') number = parseFloat(number);
@@ -634,7 +647,11 @@
       let currentPage = 1;
       const rowsPerPage = 5;
 
-      // Function to update expenses table
+      /**
+       * Actualiza la tabla de gastos aplicando filtros y paginación.
+       * Lee los valores de los inputs de filtro, filtra la lista global 'expenses'
+       * y llama a updateExpensesTableFiltered para renderizar la página actual.
+       */
       function updateExpensesTable() {
         // Aplicar filtros actuales y paginar
         const dateValue = dateFilter.value.toLowerCase();
@@ -652,6 +669,10 @@
       }
 
       // --- Actualizar tabla de gastos ---
+    /**
+     * Refresca la tabla de gastos usando la variable global 'expenses'.
+     * Esta versión prepara los valores filtrados y delega a updateExpensesTableFiltered.
+     */
     function updateExpensesTable() {
       // Usar la variable global expenses
       const dateValue = dateFilter.value.toLowerCase();
@@ -669,6 +690,12 @@
     }
 
     // --- Actualizar totales ---
+    /**
+     * Calcula y actualiza los totales mostrados en el pie de página.
+     * - total: suma de todos los gastos
+     * - totalYear: suma de los gastos del año actual
+     * Actualiza los elementos DOM correspondientes con formato adecuado.
+     */
     function updateTotalExpenses() {
       const totalElement = document.getElementById('totalExpenses');
       const totalYearElement = document.getElementById('totalYear');
@@ -683,6 +710,11 @@
     }
 
     // --- Actualizar gráfica de categorías ---
+    /**
+     * Actualiza todos los gráficos del dashboard (mensual, categorías, línea de tiempo).
+     * Destruye instancias previas de Chart.js, procesa los datos y recrea los charts.
+     * Muestra loaders mientras se renderizan para mejorar la experiencia de usuario.
+     */
     function updateCharts() {
       // Show loaders
       document.getElementById('monthlyChartLoader').style.display = "";
@@ -827,7 +859,11 @@
         }, 500);
       }
       
-      // Function to process monthly data for chart
+      /**
+       * Procesa y devuelve datos mensuales para el gráfico de gasto mensual.
+       * - Filtra gastos del año actual y suma por mes.
+       * - Devuelve labels, data y arrays de colores para Chart.js.
+       */
       function processMonthlyData() {
         const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
         const monthlyTotals = Array(12).fill(0);
@@ -856,9 +892,13 @@
         };
       }
       
-      // Function to process category data for chart
+      /**
+       * Procesa los datos por categoría para el gráfico de pastel.
+       * - Suma gastos por categoría para el mes y año actual.
+       * - Devuelve labels en español, data y colores.
+       */
       window.processCategoryData = function processCategoryData() {
-        const categoryTotals = {};
+        const categoryTotals = {}; 
         // Mapeo de categorías en español a clave interna
         const categoryKeyMap = {
           'Alimentación': 'Food',
@@ -945,7 +985,11 @@
         };
       }
       
-      // Function to process timeline data for chart
+      /**
+       * Genera datos acumulados en el tiempo para la gráfica de línea.
+       * - Agrupa gastos por fecha, calcula totales diarios y devuelve acumulados.
+       * - Retorna labels (fechas) y data (montos acumulados).
+       */
       function processTimelineData() {
         // Sort expenses by date
         const sortedExpenses = [...expenses].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -1027,6 +1071,10 @@
         });
       }
       
+      /**
+       * Aplica los filtros de la tabla (fecha, categoría, descripción, monto)
+       * y actualiza la vista reiniciando la paginación a la página 1.
+       */
       function filterTable() {
         const dateValue = dateFilter.value.toLowerCase();
         const categoryValue = categoryFilter.value.toLowerCase();
@@ -1045,6 +1093,14 @@
         updateExpensesTableFiltered(filtered, 1);
       }
 
+    /**
+     * Convierte una celda de la tabla de gastos en editable.
+     * Parámetros:
+     * - cell: elemento TD a modificar
+     * - expense: objeto de gasto correspondiente
+     * - field: campo a editar ('date', 'category', 'description', 'amount')
+     * Maneja la creación de inputs/selects, validación y guarda los cambios en localStorage.
+     */
     function makeExpenseCellEditable(cell, expense, field) {
       if (cell.querySelector('input') || cell.querySelector('select')) return; // Already editing
 
@@ -1156,6 +1212,12 @@
       }
     }
 
+      /**
+       * Renderiza una lista filtrada de gastos en la tabla con paginación.
+       * - filteredExpenses: array ya filtrado
+       * - page: número de página a mostrar
+       * Actualiza controles de paginación y elementos de la tabla.
+       */
       function updateExpensesTableFiltered(filteredExpenses, page = 1) {
         const tableBody = document.getElementById('expensesTableBody');
         const currentRowsElement = document.getElementById('currentRows');
@@ -1510,6 +1572,10 @@
       });
     });
     
+    /**
+     * Inicializa gráficos de ejemplo o alternativos usados en el dashboard
+     * (gráfica mensual, pie y línea). Se llama si existen los canvas correspondientes.
+     */
     function initCharts() {
       // Monthly expenses bar chart
       const monthlyCtx = document.getElementById('monthlyExpensesChart').getContext('2d');
