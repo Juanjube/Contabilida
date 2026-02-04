@@ -3,6 +3,12 @@
     let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
     window.expenses = expenses; // Para acceso global
 
+    // Performance: Reuse Intl.NumberFormat instance to avoid overhead in loops
+    const numberFormatter = new Intl.NumberFormat('es-CO', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
     const CATEGORY_MAP_REVERSE = {
       'Alimentación': 'Food',
       'Transporte': 'Transportation',
@@ -640,7 +646,8 @@
         // Convierte a string con separador de miles punto y decimales coma
         if (typeof number !== 'number') number = parseFloat(number);
         if (isNaN(number)) return '';
-        return number.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        // Performance: Use the reused numberFormatter instance
+        return numberFormatter.format(number);
       }
       
       // Estado de paginación
@@ -658,7 +665,8 @@
         const categoryValue = categoryFilter.value.toLowerCase();
         const descriptionValue = descriptionFilter.value.toLowerCase();
         const amountValue = amountFilter.value.toLowerCase();
-        const filtered = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).filter(expense => {
+        // Performance: Use string comparison for 'YYYY-MM-DD' dates instead of Date objects
+        const filtered = [...expenses].sort((a, b) => b.date.localeCompare(a.date)).filter(expense => {
           const dateMatch = expense.date.toLowerCase().includes(dateValue);
           const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
           const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
@@ -668,26 +676,6 @@
         updateExpensesTableFiltered(filtered, currentPage);
       }
 
-      // --- Actualizar tabla de gastos ---
-    /**
-     * Refresca la tabla de gastos usando la variable global 'expenses'.
-     * Esta versión prepara los valores filtrados y delega a updateExpensesTableFiltered.
-     */
-    function updateExpensesTable() {
-      // Usar la variable global expenses
-      const dateValue = dateFilter.value.toLowerCase();
-      const categoryValue = categoryFilter.value.toLowerCase();
-      const descriptionValue = descriptionFilter.value.toLowerCase();
-      const amountValue = amountFilter.value.toLowerCase();
-      const filtered = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).filter(expense => {
-        const dateMatch = expense.date.toLowerCase().includes(dateValue);
-        const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
-        const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
-        const amountMatch = String(expense.amount).toLowerCase().includes(amountValue);
-        return dateMatch && categoryMatch && descriptionMatch && amountMatch;
-      });
-      updateExpensesTableFiltered(filtered, currentPage);
-    }
 
     // --- Actualizar totales ---
     /**
@@ -699,12 +687,19 @@
     function updateTotalExpenses() {
       const totalElement = document.getElementById('totalExpenses');
       const totalYearElement = document.getElementById('totalYear');
-      const total = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
-      const currentYear = new Date().getFullYear();
-      const totalYear = expenses.reduce((sum, expense) => {
-        const expenseYear = new Date(expense.date).getFullYear();
-        return sum + (expenseYear === currentYear ? Number(expense.amount) : 0);
-      }, 0);
+      const currentYearStr = String(new Date().getFullYear());
+      let total = 0;
+      let totalYear = 0;
+
+      // Performance: One loop and string manipulation instead of repeated Date creation
+      expenses.forEach(expense => {
+        const amount = Number(expense.amount);
+        total += amount;
+        if (expense.date.startsWith(currentYearStr)) {
+          totalYear += amount;
+        }
+      });
+
       totalElement.textContent = `$${formatNumberWithDots(total)}`;
       totalYearElement.textContent = `$${formatNumberWithDots(totalYear)}`;
     }
@@ -870,13 +865,15 @@
         
         // Get current year
         const currentYear = new Date().getFullYear();
+        const currentYearStr = String(currentYear);
         
-        // Calculate monthly totals for current year
+        // Performance: Avoid Date object creation in loop by using string manipulation
         expenses.forEach(expense => {
-          const expenseDate = new Date(expense.date);
-          if (expenseDate.getFullYear() === currentYear) {
-            const month = expenseDate.getMonth();
-            monthlyTotals[month] += expense.amount;
+          if (expense.date.startsWith(currentYearStr)) {
+            const month = parseInt(expense.date.substring(5, 7)) - 1;
+            if (month >= 0 && month < 12) {
+              monthlyTotals[month] += expense.amount;
+            }
           }
         });
         
@@ -949,13 +946,14 @@
         };
         // Get current month and year
         const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
-        // Sumar todas las categorías iguales (en español o inglés)
+        const currentYearStr = String(now.getFullYear());
+        const currentMonthStr = String(now.getMonth() + 1).padStart(2, '0');
+        const currentYearMonth = `${currentYearStr}-${currentMonthStr}`;
+
+        // Performance: Avoid Date object creation in loop by using string comparison
         expenses.forEach(expense => {
-          const expenseDate = new Date(expense.date);
-          let key = categoryKeyMap[expense.category] || expense.category;
-          if (expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear) {
+          if (expense.date.startsWith(currentYearMonth)) {
+            let key = categoryKeyMap[expense.category] || expense.category;
             if (!categoryTotals[key]) {
               categoryTotals[key] = 0;
             }
@@ -992,7 +990,8 @@
        */
       function processTimelineData() {
         // Sort expenses by date
-        const sortedExpenses = [...expenses].sort((a, b) => new Date(a.date) - new Date(b.date));
+        // Performance: Use string comparison for 'YYYY-MM-DD' dates
+        const sortedExpenses = [...expenses].sort((a, b) => a.date.localeCompare(b.date));
         
         // Group by date
         const dailyTotals = {};
