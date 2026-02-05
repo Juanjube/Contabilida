@@ -30,6 +30,22 @@
       'Other': 'Otro'
     };
 
+    /**
+     * Sanitiza una cadena de texto para prevenir XSS.
+     * @param {string} str - La cadena a sanitizar.
+     * @returns {string} - La cadena sanitizada.
+     */
+    function escapeHTML(str) {
+      if (typeof str !== 'string') return str;
+      return str.replace(/[&<>"']/g, m => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      }[m]));
+    }
+
 
     // --- Lógica para ingresos en billetes ---
     /**
@@ -124,7 +140,7 @@
         window.getBillIncomes().forEach(b => {
           const subtotal = b.type * b.quantity;
           total += subtotal;
-          html += `<tr><td>${window.getBillLabel(b.type)}</td><td>${b.quantity}</td><td>${window.getBillLabel(b.type)}</td><td>${window.getBillLabel(subtotal)}</td></tr>`;
+          html += `<tr><td>${escapeHTML(window.getBillLabel(b.type))}</td><td>${escapeHTML(String(b.quantity))}</td><td>${escapeHTML(window.getBillLabel(b.type))}</td><td>${escapeHTML(window.getBillLabel(subtotal))}</td></tr>`;
         });
         html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>${window.getBillLabel(total)}</th></tr>`;
         html += `</table>`;
@@ -573,7 +589,7 @@
           const value = parseInt(c.type);
           const subtotal = value * c.quantity;
           total += subtotal;
-          html += `<tr><td>${coinLabels[c.type]}</td><td>${c.quantity}</td><td>${coinLabels[c.type]}</td><td>$${formatNumberWithDots(subtotal)}</td></tr>`;
+          html += `<tr><td>${escapeHTML(coinLabels[c.type])}</td><td>${escapeHTML(String(c.quantity))}</td><td>${escapeHTML(coinLabels[c.type])}</td><td>$${formatNumberWithDots(subtotal)}</td></tr>`;
         });
         html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>$${formatNumberWithDots(total)}</th></tr>`;
         html += `</table>`;
@@ -590,7 +606,7 @@
         html += `<tr><th><i class="fa-solid fa-calendar"></i> Fecha</th><th>Categoría</th><th>Descripción</th><th>Monto</th></tr>`;
         let total = 0;
         expenses.forEach(e => {
-          html += `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.description}</td><td>$${formatNumberWithDots(e.amount)}</td></tr>`;
+          html += `<tr><td>${escapeHTML(e.date)}</td><td>${escapeHTML(e.category)}</td><td>${escapeHTML(e.description)}</td><td>$${formatNumberWithDots(e.amount)}</td></tr>`;
           total += e.amount;
         });
         html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>$${formatNumberWithDots(total)}</th></tr>`;
