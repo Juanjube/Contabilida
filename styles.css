@@ -199,6 +199,8 @@
     }
     
     .help-icon {
+      border: none;
+      padding: 0;
       position: fixed;
       bottom: 20px;
       right: 20px;
@@ -220,6 +222,11 @@
       background-color: #f44336;
       color: #fff;
       box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    }
+
+    button:focus-visible {
+      outline: 3px solid var(--primary-color);
+      outline-offset: 2px;
     }
     
     .modal-content {
