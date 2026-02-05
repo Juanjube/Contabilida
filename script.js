@@ -1,3 +1,17 @@
+// --- Función de utilidad para escapar HTML ---
+function escapeHTML(str) {
+  str = String(str);
+  return str.replace(/[&<>"']/g, function(match) {
+    return {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[match];
+  });
+}
+
 // Lógica para ingresos en billetes (antes en billIncomes.js)
     // --- Variables globales ---
     let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
@@ -124,9 +138,9 @@
         window.getBillIncomes().forEach(b => {
           const subtotal = b.type * b.quantity;
           total += subtotal;
-          html += `<tr><td>${window.getBillLabel(b.type)}</td><td>${b.quantity}</td><td>${window.getBillLabel(b.type)}</td><td>${window.getBillLabel(subtotal)}</td></tr>`;
+          html += `<tr><td>${escapeHTML(window.getBillLabel(b.type))}</td><td>${escapeHTML(b.quantity)}</td><td>${escapeHTML(window.getBillLabel(b.type))}</td><td>${escapeHTML(window.getBillLabel(subtotal))}</td></tr>`;
         });
-        html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>${window.getBillLabel(total)}</th></tr>`;
+        html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>${escapeHTML(window.getBillLabel(total))}</th></tr>`;
         html += `</table>`;
         const win = window.open('', '', 'width=900,height=700');
         win.document.write(`<html><head><title>Ingresos en billetes</title></head><body>${html}</body></html>`);
@@ -213,7 +227,7 @@
             // Reemplazar inputs por su value para seguridad
             if (el.tagName.toLowerCase() !== 'button') {
               const span = document.createElement('span');
-              span.textContent = el.value || el.textContent || '';
+              span.textContent = escapeHTML(el.value || el.textContent || '');
               el.parentNode && el.parentNode.replaceChild(span, el);
             } else {
               el.remove();
@@ -573,9 +587,9 @@
           const value = parseInt(c.type);
           const subtotal = value * c.quantity;
           total += subtotal;
-          html += `<tr><td>${coinLabels[c.type]}</td><td>${c.quantity}</td><td>${coinLabels[c.type]}</td><td>$${formatNumberWithDots(subtotal)}</td></tr>`;
+          html += `<tr><td>${escapeHTML(coinLabels[c.type])}</td><td>${escapeHTML(c.quantity)}</td><td>${escapeHTML(coinLabels[c.type])}</td><td>$${escapeHTML(formatNumberWithDots(subtotal))}</td></tr>`;
         });
-        html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>$${formatNumberWithDots(total)}</th></tr>`;
+        html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>$${escapeHTML(formatNumberWithDots(total))}</th></tr>`;
         html += `</table>`;
         const win = window.open('', '', 'width=900,height=700');
         win.document.write(`<html><head><title>Ingresos en monedas</title></head><body>${html}</body></html>`);
@@ -590,10 +604,10 @@
         html += `<tr><th><i class="fa-solid fa-calendar"></i> Fecha</th><th>Categoría</th><th>Descripción</th><th>Monto</th></tr>`;
         let total = 0;
         expenses.forEach(e => {
-          html += `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.description}</td><td>$${formatNumberWithDots(e.amount)}</td></tr>`;
+          html += `<tr><td>${escapeHTML(e.date)}</td><td>${escapeHTML(e.category)}</td><td>${escapeHTML(e.description)}</td><td>$${escapeHTML(formatNumberWithDots(e.amount))}</td></tr>`;
           total += e.amount;
         });
-        html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>$${formatNumberWithDots(total)}</th></tr>`;
+        html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>$${escapeHTML(formatNumberWithDots(total))}</th></tr>`;
         html += `</table>`;
         const win = window.open('', '', 'width=900,height=700');
         win.document.write(`<html><head><title>Gastos</title></head><body>${html}</body></html>`);
