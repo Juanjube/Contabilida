@@ -22,7 +22,7 @@
           background-color: #000000;">
           <div class="brand">ExpenseTracker Pro</div>
         </div>
-        <button class="theme-toggle" id="themeToggle">
+        <button class="theme-toggle" id="themeToggle" aria-label="Activate dark mode">
           <i class="fas fa-moon"></i>
         </button>
       </div>
@@ -360,9 +360,9 @@
   </div>
 
   <!-- Icono de ayuda -->
-  <div class="help-icon" data-bs-toggle="modal" data-bs-target="#helpModal">
+  <button class="help-icon" data-bs-toggle="modal" data-bs-target="#helpModal" aria-label="Open help modal">
     <i class="fas fa-question"></i>
-  </div>
+  </button>
 
   <!-- Modal de ayuda -->
   <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
