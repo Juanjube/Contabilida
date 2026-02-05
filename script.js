@@ -1,5 +1,9 @@
 // Lógica para ingresos en billetes (antes en billIncomes.js)
     // --- Variables globales ---
+    // SENTINEL: Función de sanitización para prevenir XSS
+    function sanitizeHTML(str) {
+      return str.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
     let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
     window.expenses = expenses; // Para acceso global
 
@@ -124,9 +128,9 @@
         window.getBillIncomes().forEach(b => {
           const subtotal = b.type * b.quantity;
           total += subtotal;
-          html += `<tr><td>${window.getBillLabel(b.type)}</td><td>${b.quantity}</td><td>${window.getBillLabel(b.type)}</td><td>${window.getBillLabel(subtotal)}</td></tr>`;
+          html += `<tr><td>${sanitizeHTML(window.getBillLabel(b.type))}</td><td>${sanitizeHTML(b.quantity)}</td><td>${sanitizeHTML(window.getBillLabel(b.type))}</td><td>${sanitizeHTML(window.getBillLabel(subtotal))}</td></tr>`;
         });
-        html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>${window.getBillLabel(total)}</th></tr>`;
+        html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>${sanitizeHTML(window.getBillLabel(total))}</th></tr>`;
         html += `</table>`;
         const win = window.open('', '', 'width=900,height=700');
         win.document.write(`<html><head><title>Ingresos en billetes</title></head><body>${html}</body></html>`);
@@ -573,9 +577,9 @@
           const value = parseInt(c.type);
           const subtotal = value * c.quantity;
           total += subtotal;
-          html += `<tr><td>${coinLabels[c.type]}</td><td>${c.quantity}</td><td>${coinLabels[c.type]}</td><td>$${formatNumberWithDots(subtotal)}</td></tr>`;
+          html += `<tr><td>${sanitizeHTML(coinLabels[c.type])}</td><td>${sanitizeHTML(c.quantity)}</td><td>${sanitizeHTML(coinLabels[c.type])}</td><td>$${sanitizeHTML(formatNumberWithDots(subtotal))}</td></tr>`;
         });
-        html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>$${formatNumberWithDots(total)}</th></tr>`;
+        html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>$${sanitizeHTML(formatNumberWithDots(total))}</th></tr>`;
         html += `</table>`;
         const win = window.open('', '', 'width=900,height=700');
         win.document.write(`<html><head><title>Ingresos en monedas</title></head><body>${html}</body></html>`);
@@ -590,7 +594,7 @@
         html += `<tr><th><i class="fa-solid fa-calendar"></i> Fecha</th><th>Categoría</th><th>Descripción</th><th>Monto</th></tr>`;
         let total = 0;
         expenses.forEach(e => {
-          html += `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.description}</td><td>$${formatNumberWithDots(e.amount)}</td></tr>`;
+          html += `<tr><td>${sanitizeHTML(e.date)}</td><td>${sanitizeHTML(e.category)}</td><td>${sanitizeHTML(e.description)}</td><td>$${sanitizeHTML(formatNumberWithDots(e.amount))}</td></tr>`;
           total += e.amount;
         });
         html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>$${formatNumberWithDots(total)}</th></tr>`;
