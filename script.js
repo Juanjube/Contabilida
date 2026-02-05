@@ -13,9 +13,19 @@
       'Salud': 'Healthcare',
       'Viajes': 'Travel',
       'Educación': 'Education',
-      'Otro': 'Other'
+      'Otro': 'Other',
+      'Food': 'Food',
+      'Transportation': 'Transportation',
+      'Housing': 'Housing',
+      'Utilities': 'Utilities',
+      'Entertainment': 'Entertainment',
+      'Shopping': 'Shopping',
+      'Healthcare': 'Healthcare',
+      'Travel': 'Travel',
+      'Education': 'Education',
+      'Other': 'Other'
     };
-    const ALL_CATEGORIES = Object.keys(CATEGORY_MAP_REVERSE);
+    const ALL_CATEGORIES = ['Alimentación', 'Transporte', 'Vivienda', 'Servicios', 'Entretenimiento', 'Compras', 'Salud', 'Viajes', 'Educación', 'Otro'];
 
     const CATEGORY_LABEL_MAP = {
       'Food': 'Alimentación',
@@ -27,8 +37,48 @@
       'Healthcare': 'Salud',
       'Travel': 'Viajes',
       'Education': 'Educación',
-      'Other': 'Otro'
+      'Other': 'Otro',
+      'Alimentación': 'Alimentación',
+      'Transporte': 'Transporte',
+      'Vivienda': 'Vivienda',
+      'Servicios': 'Servicios',
+      'Entretenimiento': 'Entretenimiento',
+      'Compras': 'Compras',
+      'Salud': 'Salud',
+      'Viajes': 'Viajes',
+      'Educación': 'Educación',
+      'Otro': 'Otro'
     };
+
+    const COLOR_MAP = {
+      'Food': 'rgba(244, 67, 54, 0.7)',
+      'Transportation': 'rgba(33, 150, 243, 0.7)',
+      'Housing': 'rgba(76, 175, 80, 0.7)',
+      'Utilities': 'rgba(255, 193, 7, 0.7)',
+      'Entertainment': 'rgba(156, 39, 176, 0.7)',
+      'Shopping': 'rgba(0, 188, 212, 0.7)',
+      'Healthcare': 'rgba(233, 30, 99, 0.7)',
+      'Travel': 'rgba(255, 87, 34, 0.7)',
+      'Education': 'rgba(63, 81, 181, 0.7)',
+      'Other': 'rgba(158, 158, 158, 0.7)'
+    };
+
+    const esCoFormatter = new Intl.NumberFormat('es-CO', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+    /**
+     * Helper para limitar la frecuencia de ejecución de una función.
+     * Útil para eventos que se disparan rápidamente (como 'input' en filtros).
+     */
+    function debounce(func, wait) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
 
 
     // --- Lógica para ingresos en billetes ---
@@ -638,9 +688,9 @@
        */
       function formatNumberWithDots(number) {
         // Convierte a string con separador de miles punto y decimales coma
-        if (typeof number !== 'number') number = parseFloat(number);
-        if (isNaN(number)) return '';
-        return number.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const val = typeof number === 'number' ? number : parseFloat(number);
+        if (isNaN(val)) return '';
+        return esCoFormatter.format(val);
       }
       
       // Estado de paginación
@@ -652,26 +702,10 @@
        * Lee los valores de los inputs de filtro, filtra la lista global 'expenses'
        * y llama a updateExpensesTableFiltered para renderizar la página actual.
        */
-      function updateExpensesTable() {
-        // Aplicar filtros actuales y paginar
-        const dateValue = dateFilter.value.toLowerCase();
-        const categoryValue = categoryFilter.value.toLowerCase();
-        const descriptionValue = descriptionFilter.value.toLowerCase();
-        const amountValue = amountFilter.value.toLowerCase();
-        const filtered = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).filter(expense => {
-          const dateMatch = expense.date.toLowerCase().includes(dateValue);
-          const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
-          const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
-          const amountMatch = String(expense.amount).toLowerCase().includes(amountValue);
-          return dateMatch && categoryMatch && descriptionMatch && amountMatch;
-        });
-        updateExpensesTableFiltered(filtered, currentPage);
-      }
-
-      // --- Actualizar tabla de gastos ---
+    // --- Actualizar tabla de gastos ---
     /**
      * Refresca la tabla de gastos usando la variable global 'expenses'.
-     * Esta versión prepara los valores filtrados y delega a updateExpensesTableFiltered.
+     * Esta versión aplica filtros, ordena por fecha de forma eficiente y delega a updateExpensesTableFiltered.
      */
     function updateExpensesTable() {
       // Usar la variable global expenses
@@ -679,13 +713,18 @@
       const categoryValue = categoryFilter.value.toLowerCase();
       const descriptionValue = descriptionFilter.value.toLowerCase();
       const amountValue = amountFilter.value.toLowerCase();
-      const filtered = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).filter(expense => {
-        const dateMatch = expense.date.toLowerCase().includes(dateValue);
-        const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
-        const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
-        const amountMatch = String(expense.amount).toLowerCase().includes(amountValue);
-        return dateMatch && categoryMatch && descriptionMatch && amountMatch;
-      });
+
+      // Optimizamos el ordenamiento usando comparación de strings (YYYY-MM-DD)
+      const filtered = [...expenses]
+        .sort((a, b) => (b.date < a.date ? -1 : (b.date > a.date ? 1 : 0)))
+        .filter(expense => {
+          const dateMatch = expense.date.toLowerCase().includes(dateValue);
+          const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
+          const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
+          const amountMatch = String(expense.amount).toLowerCase().includes(amountValue);
+          return dateMatch && categoryMatch && descriptionMatch && amountMatch;
+        });
+
       updateExpensesTableFiltered(filtered, currentPage);
     }
 
@@ -699,12 +738,18 @@
     function updateTotalExpenses() {
       const totalElement = document.getElementById('totalExpenses');
       const totalYearElement = document.getElementById('totalYear');
-      const total = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
-      const currentYear = new Date().getFullYear();
-      const totalYear = expenses.reduce((sum, expense) => {
-        const expenseYear = new Date(expense.date).getFullYear();
-        return sum + (expenseYear === currentYear ? Number(expense.amount) : 0);
-      }, 0);
+      const currentYear = new Date().getFullYear().toString();
+      let total = 0;
+      let totalYear = 0;
+
+      for (let i = 0, len = expenses.length; i < len; i++) {
+        const amount = Number(expenses[i].amount);
+        total += amount;
+        if (expenses[i].date && expenses[i].date.startsWith(currentYear)) {
+          totalYear += amount;
+        }
+      }
+
       totalElement.textContent = `$${formatNumberWithDots(total)}`;
       totalYearElement.textContent = `$${formatNumberWithDots(totalYear)}`;
     }
@@ -899,54 +944,7 @@
        */
       window.processCategoryData = function processCategoryData() {
         const categoryTotals = {}; 
-        // Mapeo de categorías en español a clave interna
-        const categoryKeyMap = {
-          'Alimentación': 'Food',
-          'Transporte': 'Transportation',
-          'Vivienda': 'Housing',
-          'Servicios': 'Utilities',
-          'Entretenimiento': 'Entertainment',
-          'Compras': 'Shopping',
-          'Salud': 'Healthcare',
-          'Viajes': 'Travel',
-          'Educación': 'Education',
-          'Otro': 'Other',
-          // También permitir claves internas para compatibilidad
-          'Food': 'Food',
-          'Transportation': 'Transportation',
-          'Housing': 'Housing',
-          'Utilities': 'Utilities',
-          'Entertainment': 'Entertainment',
-          'Shopping': 'Shopping',
-          'Healthcare': 'Healthcare',
-          'Travel': 'Travel',
-          'Education': 'Education',
-          'Other': 'Other'
-        };
-        const colorMap = {
-          'Food': 'rgba(244, 67, 54, 0.7)',
-          'Transportation': 'rgba(33, 150, 243, 0.7)',
-          'Housing': 'rgba(76, 175, 80, 0.7)',
-          'Utilities': 'rgba(255, 193, 7, 0.7)',
-          'Entertainment': 'rgba(156, 39, 176, 0.7)',
-          'Shopping': 'rgba(0, 188, 212, 0.7)',
-          'Healthcare': 'rgba(233, 30, 99, 0.7)',
-          'Travel': 'rgba(255, 87, 34, 0.7)',
-          'Education': 'rgba(63, 81, 181, 0.7)',
-          'Other': 'rgba(158, 158, 158, 0.7)'
-        };
-        const categoryLabelMap = {
-          'Food': 'Alimentación',
-          'Transportation': 'Transporte',
-          'Housing': 'Vivienda',
-          'Utilities': 'Servicios',
-          'Entertainment': 'Entretenimiento',
-          'Shopping': 'Compras',
-          'Healthcare': 'Salud',
-          'Travel': 'Viajes',
-          'Education': 'Educación',
-          'Other': 'Otro'
-        };
+
         // Get current month and year
         const now = new Date();
         const currentMonth = now.getMonth();
@@ -954,7 +952,7 @@
         // Sumar todas las categorías iguales (en español o inglés)
         expenses.forEach(expense => {
           const expenseDate = new Date(expense.date);
-          let key = categoryKeyMap[expense.category] || expense.category;
+          let key = CATEGORY_MAP_REVERSE[expense.category] || expense.category;
           if (expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear) {
             if (!categoryTotals[key]) {
               categoryTotals[key] = 0;
@@ -965,7 +963,7 @@
         // Agrupar por etiqueta en español para sumar correctamente si hay duplicados
         const labelTotals = {};
         Object.keys(categoryTotals).forEach(key => {
-          const label = categoryLabelMap[key] || key;
+          const label = CATEGORY_LABEL_MAP[key] || key;
           if (!labelTotals[label]) labelTotals[label] = 0;
           labelTotals[label] += categoryTotals[key];
         });
@@ -973,8 +971,8 @@
         const data = Object.values(labelTotals);
         const colors = labels.map(label => {
           // Buscar la key original para el color
-          const key = Object.keys(categoryLabelMap).find(k => categoryLabelMap[k] === label) || 'Other';
-          return colorMap[key] || 'rgba(158, 158, 158, 0.7)';
+          const key = Object.keys(CATEGORY_LABEL_MAP).find(k => CATEGORY_LABEL_MAP[k] === label) || 'Other';
+          return COLOR_MAP[key] || 'rgba(158, 158, 158, 0.7)';
         });
         const borderColors = colors.map(color => color.replace('rgba', 'rgb').replace(/\d+\.\d+\)$/, '1)'));
         return {
@@ -1035,8 +1033,8 @@
       dateFilter.addEventListener('change', filterTable);
       // categoryFilter is a select -> listen for change
       categoryFilter.addEventListener('change', filterTable);
-      descriptionFilter.addEventListener('input', filterTable);
-      amountFilter.addEventListener('input', filterTable);
+      descriptionFilter.addEventListener('input', debounce(filterTable, 250));
+      amountFilter.addEventListener('input', debounce(filterTable, 250));
 
       // Populate categoryFilter options from the main expenseCategory select
       const expenseCategory = document.getElementById('expenseCategory');
