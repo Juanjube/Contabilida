@@ -1,0 +1,3 @@
+## 2024-07-29 - Debouncing Filter Inputs
+**Learning:** The application was calling the `filterTable()` function on every `input` event for the description and amount filters. This caused excessive re-rendering of the expense table, leading to a noticeable lag, especially with a larger dataset.
+**Action:** I will apply a `debounce` function to these high-frequency input events going forward. This optimization delays the filter execution until the user has stopped typing for a brief period (e.g., 300ms), significantly reducing the number of re-renders and improving UI responsiveness. This is a critical pattern to apply for any text-based filtering in this application.
