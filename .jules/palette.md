@@ -1,0 +1,3 @@
+## 2026-02-03 - [Accessibility of Global UI Controls]
+**Learning:** Icon-only buttons (theme toggle) and custom-styled elements (help icon, collapsible headers) are often missing ARIA labels and keyboard support in legacy projects. Using semantic <button> elements and dynamic aria-label/aria-expanded attributes significantly improves the experience for screen reader and keyboard users without affecting the visual design.
+**Action:** Always check for icon-only buttons and non-semantic interactive elements. Ensure they have descriptive ARIA labels that update with state and respond to 'Enter'/'Space' keys.
