@@ -336,10 +336,12 @@
         if (document.body.classList.contains('dark-mode')) {
           icon.classList.remove('fa-moon');
           icon.classList.add('fa-sun');
+          themeToggle.setAttribute('aria-label', 'Activate light mode');
           localStorage.setItem('theme', 'dark');
         } else {
           icon.classList.remove('fa-sun');
           icon.classList.add('fa-moon');
+          themeToggle.setAttribute('aria-label', 'Activate dark mode');
           localStorage.setItem('theme', 'light');
         }
       });
