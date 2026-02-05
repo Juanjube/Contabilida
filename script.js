@@ -1,4 +1,14 @@
 // Lógica para ingresos en billetes (antes en billIncomes.js)
+    // --- Helper para botones de acción ---
+    function createDeleteButton(label, msg, cb) {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-link p-0 border-0 text-decoration-none';
+      btn.setAttribute('aria-label', label);
+      btn.innerHTML = `<i class="fas fa-trash delete-icon" title="${label}"></i>`;
+      btn.onclick = (e) => { e.stopPropagation(); if (confirm(msg)) cb(); };
+      return btn;
+    }
+
     // --- Variables globales ---
     let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
     window.expenses = expenses; // Para acceso global
@@ -85,15 +95,10 @@
         tr.appendChild(tdTotal);
         // Botón eliminar
         const tdDelete = document.createElement('td');
-        const deleteBtn = document.createElement('i');
-        deleteBtn.className = 'fas fa-trash delete-icon';
-        deleteBtn.style.cursor = 'pointer';
-        deleteBtn.title = 'Eliminar ingreso';
-        deleteBtn.addEventListener('click', function() {
+        tdDelete.appendChild(createDeleteButton('Eliminar ingreso', '¿Estás seguro de eliminar este ingreso?', () => {
           window.deleteBillIncome(b.type);
           updateBillIncomeTable();
-        });
-        tdDelete.appendChild(deleteBtn);
+        }));
         tr.appendChild(tdDelete);
         billIncomeBody.appendChild(tr);
       });
@@ -336,10 +341,12 @@
         if (document.body.classList.contains('dark-mode')) {
           icon.classList.remove('fa-moon');
           icon.classList.add('fa-sun');
+          themeToggle.setAttribute('aria-label', 'Activar modo claro');
           localStorage.setItem('theme', 'dark');
         } else {
           icon.classList.remove('fa-sun');
           icon.classList.add('fa-moon');
+          themeToggle.setAttribute('aria-label', 'Activar modo oscuro');
           localStorage.setItem('theme', 'light');
         }
       });
@@ -349,6 +356,7 @@
         document.body.classList.add('dark-mode');
         icon.classList.remove('fa-moon');
         icon.classList.add('fa-sun');
+        themeToggle.setAttribute('aria-label', 'Activar modo claro');
       }
       
       // Load expenses from localStorage
@@ -431,16 +439,11 @@
           tr.appendChild(tdTotal);
           // Botón eliminar
           const tdDelete = document.createElement('td');
-          const deleteBtn = document.createElement('i');
-          deleteBtn.className = 'fas fa-trash delete-icon';
-          deleteBtn.style.cursor = 'pointer';
-          deleteBtn.title = 'Eliminar ingreso';
-          deleteBtn.addEventListener('click', function() {
+          tdDelete.appendChild(createDeleteButton('Eliminar ingreso', '¿Estás seguro de eliminar este ingreso?', () => {
             coinIncomes.splice(idx, 1);
             localStorage.setItem('coinIncomes', JSON.stringify(coinIncomes));
             updateCoinIncomeTable();
-          });
-          tdDelete.appendChild(deleteBtn);
+          }));
           tr.appendChild(tdDelete);
           coinIncomeBody.appendChild(tr);
         });
@@ -1277,19 +1280,13 @@
           // Acciones
           const actionsCell = document.createElement('td');
           actionsCell.className = 'text-center';
-          const deleteIcon = document.createElement('i');
-          deleteIcon.className = 'fas fa-trash delete-icon';
-          deleteIcon.dataset.id = expense.id;
-          deleteIcon.title = 'Eliminar';
-          deleteIcon.addEventListener('click', function() {
-            const id = this.dataset.id;
-            expenses = expenses.filter(exp => exp.id != id);
+          actionsCell.appendChild(createDeleteButton('Eliminar gasto', '¿Estás seguro de eliminar este gasto?', () => {
+            expenses = expenses.filter(exp => exp.id != expense.id);
             localStorage.setItem('expenses', JSON.stringify(expenses));
-            filterTable(); // Refiltrar y repaginar
+            filterTable();
             updateCharts();
             updateTotalExpenses();
-          });
-          actionsCell.appendChild(deleteIcon);
+          }));
           tr.appendChild(actionsCell);
           tableBody.appendChild(tr);
         });
