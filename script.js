@@ -1,3 +1,9 @@
+// --- Función de sanitización ---
+function sanitizeHTML(str) {
+  const temp = document.createElement('div');
+  temp.textContent = str;
+  return temp.innerHTML;
+}
 // Lógica para ingresos en billetes (antes en billIncomes.js)
     // --- Variables globales ---
     let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
@@ -590,7 +596,7 @@
         html += `<tr><th><i class="fa-solid fa-calendar"></i> Fecha</th><th>Categoría</th><th>Descripción</th><th>Monto</th></tr>`;
         let total = 0;
         expenses.forEach(e => {
-          html += `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.description}</td><td>$${formatNumberWithDots(e.amount)}</td></tr>`;
+          html += `<tr><td>${e.date}</td><td>${e.category}</td><td>${sanitizeHTML(e.description)}</td><td>$${formatNumberWithDots(e.amount)}</td></tr>`;
           total += e.amount;
         });
         html += `<tr><th colspan='3' style='text-align:right;'>Total general:</th><th>$${formatNumberWithDots(total)}</th></tr>`;
