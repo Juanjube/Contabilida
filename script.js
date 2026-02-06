@@ -3,6 +3,23 @@
     let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
     window.expenses = expenses; // Para acceso global
 
+    // Hoisted formatter to avoid repeated object creation (Bolt optimization)
+    const numberFormatter = new Intl.NumberFormat('es-CO', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+    /**
+     * Formatea un número con separador de miles (.) y dos decimales, usando locale 'es-CO'.
+     * number: número o string convertible a número.
+     * return: string formateado (ej. 1.234,56)
+     */
+    function formatNumberWithDots(number) {
+      if (typeof number !== 'number') number = parseFloat(number);
+      if (isNaN(number)) return '';
+      return numberFormatter.format(number);
+    }
+
     const CATEGORY_MAP_REVERSE = {
       'Alimentación': 'Food',
       'Transporte': 'Transportation',
@@ -631,17 +648,6 @@
         });
       });
       
-      /**
-       * Formatea un número con separador de miles (.) y dos decimales, usando locale 'es-CO'.
-       * number: número o string convertible a número.
-       * return: string formateado (ej. 1.234,56)
-       */
-      function formatNumberWithDots(number) {
-        // Convierte a string con separador de miles punto y decimales coma
-        if (typeof number !== 'number') number = parseFloat(number);
-        if (isNaN(number)) return '';
-        return number.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      }
       
       // Estado de paginación
       let currentPage = 1;
@@ -652,13 +658,19 @@
        * Lee los valores de los inputs de filtro, filtra la lista global 'expenses'
        * y llama a updateExpensesTableFiltered para renderizar la página actual.
        */
+      /**
+       * Actualiza la tabla de gastos aplicando filtros y paginación.
+       * Optimized with string-based sorting (Bolt optimization).
+       */
       function updateExpensesTable() {
         // Aplicar filtros actuales y paginar
         const dateValue = dateFilter.value.toLowerCase();
         const categoryValue = categoryFilter.value.toLowerCase();
         const descriptionValue = descriptionFilter.value.toLowerCase();
         const amountValue = amountFilter.value.toLowerCase();
-        const filtered = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).filter(expense => {
+
+        // Optimization: Sort using string comparison instead of new Date()
+        const filtered = [...expenses].sort((a, b) => b.date < a.date ? -1 : (b.date > a.date ? 1 : 0)).filter(expense => {
           const dateMatch = expense.date.toLowerCase().includes(dateValue);
           const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
           const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
@@ -668,27 +680,6 @@
         updateExpensesTableFiltered(filtered, currentPage);
       }
 
-      // --- Actualizar tabla de gastos ---
-    /**
-     * Refresca la tabla de gastos usando la variable global 'expenses'.
-     * Esta versión prepara los valores filtrados y delega a updateExpensesTableFiltered.
-     */
-    function updateExpensesTable() {
-      // Usar la variable global expenses
-      const dateValue = dateFilter.value.toLowerCase();
-      const categoryValue = categoryFilter.value.toLowerCase();
-      const descriptionValue = descriptionFilter.value.toLowerCase();
-      const amountValue = amountFilter.value.toLowerCase();
-      const filtered = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).filter(expense => {
-        const dateMatch = expense.date.toLowerCase().includes(dateValue);
-        const categoryMatch = (expense.category || '').toLowerCase().includes(categoryValue);
-        const descriptionMatch = (expense.description || '').toLowerCase().includes(descriptionValue);
-        const amountMatch = String(expense.amount).toLowerCase().includes(amountValue);
-        return dateMatch && categoryMatch && descriptionMatch && amountMatch;
-      });
-      updateExpensesTableFiltered(filtered, currentPage);
-    }
-
     // --- Actualizar totales ---
     /**
      * Calcula y actualiza los totales mostrados en el pie de página.
@@ -696,15 +687,27 @@
      * - totalYear: suma de los gastos del año actual
      * Actualiza los elementos DOM correspondientes con formato adecuado.
      */
+    /**
+     * Calcula y actualiza los totales mostrados en el pie de página.
+     * Optimized to use a single loop and string-based year check (Bolt optimization).
+     */
     function updateTotalExpenses() {
       const totalElement = document.getElementById('totalExpenses');
       const totalYearElement = document.getElementById('totalYear');
-      const total = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
-      const currentYear = new Date().getFullYear();
-      const totalYear = expenses.reduce((sum, expense) => {
-        const expenseYear = new Date(expense.date).getFullYear();
-        return sum + (expenseYear === currentYear ? Number(expense.amount) : 0);
-      }, 0);
+      let total = 0;
+      let totalYear = 0;
+      const currentYearStr = new Date().getFullYear().toString();
+
+      for (let i = 0; i < expenses.length; i++) {
+        const exp = expenses[i];
+        const amt = Number(exp.amount) || 0;
+        total += amt;
+        // Optimization: Use string startsWith instead of creating Date objects
+        if (exp.date && exp.date.startsWith(currentYearStr)) {
+          totalYear += amt;
+        }
+      }
+
       totalElement.textContent = `$${formatNumberWithDots(total)}`;
       totalYearElement.textContent = `$${formatNumberWithDots(totalYear)}`;
     }
