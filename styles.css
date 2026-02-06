@@ -214,6 +214,20 @@
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
       cursor: pointer;
       z-index: 1000;
+      border: none;
+      padding: 0;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .help-icon:hover {
+      transform: scale(1.1);
+      background-color: var(--primary-hover);
+    }
+
+    .help-icon:focus-visible {
+      outline: 3px solid var(--primary-color);
+      outline-offset: 3px;
+      transform: scale(1.1);
     }
     
     body.dark-mode .help-icon {
